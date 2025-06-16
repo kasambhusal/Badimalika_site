@@ -1,0 +1,12 @@
+@import "tailwindcss";
+
+* {
+  box-sizing: border-box;
+}
+
+.top-nav {
+  background-color: #002c58;
+}
+.municipality-text {
+  color: #fff;
+}

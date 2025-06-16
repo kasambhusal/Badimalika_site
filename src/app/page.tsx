@@ -1,6 +1,10 @@
+import Home from "@/ui/Home";
+import React from "react";
 
-export default function Home() {
+export default function page() {
   return (
-    <div>Badimalika Municipality</div>
+    <>
+      <Home />
+    </>
   );
 }

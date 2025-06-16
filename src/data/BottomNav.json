@@ -1,0 +1,58 @@
+{
+    "navData":[
+         {
+      "type": "link",
+      "label": "गृहपृष्ठ",
+      "href": "/"
+    },
+         {
+      "type": "link",
+      "label": "जनसंख्या",
+      "href": "/"
+    },
+         {
+      "type": "link",
+      "label": "घर धुरी",
+      "href": "/"
+    },
+         {
+      "type": "link",
+      "label": "संस्था",
+      "href": "/"
+    },
+         {
+      "type": "link",
+      "label": "म्याप भ्यू",
+      "href": "/"
+    },
+         {
+      "type": "link",
+      "label": "लगिन",
+      "href": "/"
+    }
+    ,
+         {
+      "type": "dropdown",
+      "label": "टेस्ट",
+      "href": "/",
+      "id":"test",
+      "sub":[
+        {
+          "type":"link",
+          "label":"Test.1",
+          "href":"/"
+        },
+        {
+          "type":"link",
+          "label":"Test.2",
+          "href":"/"
+        },
+        {
+          "type":"link",
+          "label":"Test.3",
+          "href":"/"
+        }
+      ]
+    }
+    ]
+}
