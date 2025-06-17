@@ -18,10 +18,6 @@ interface NavItem {
   sub?: SubItem[];
 }
 
-interface NavData {
-  navData: NavItem[];
-}
-
 const BottomNav = () => {
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
 
