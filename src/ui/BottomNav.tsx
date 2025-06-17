@@ -4,20 +4,6 @@ import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 import navData from "@/data/BottomNav.json";
 
-interface SubItem {
-  type: string;
-  label: string;
-  href: string;
-}
-
-interface NavItem {
-  type: "link" | "dropdown";
-  label: string;
-  href: string;
-  id?: string;
-  sub?: SubItem[];
-}
-
 const BottomNav = () => {
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
 
