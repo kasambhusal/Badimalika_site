@@ -50,7 +50,7 @@ const Hero2 = () => {
   };
 
   return (
-    <section className="w-full bg-gradient-to-br from-gray-50 to-gray-100 py-12 lg:py-20">
+    <section className="w-full py-12 lg:py-20">
       <div className="max-w-7xl mx-auto px-6">
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           {/* Left Side - Image Carousel */}

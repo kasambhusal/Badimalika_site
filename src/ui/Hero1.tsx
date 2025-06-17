@@ -68,7 +68,7 @@ const Hero1 = () => {
   ];
 
   return (
-    <section className="w-full bg-gradient-to-br from-gray-50 to-gray-100 py-12 lg:py-16">
+    <section className="w-full  lg:py-16">
       <div className="max-w-7xl mx-auto px-6">
         {/* Section Header */}
         <div className="text-center mb-12">
