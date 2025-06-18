@@ -54,7 +54,9 @@ export function HomeMembers({
   className,
 }: HomeMemberProps) {
   return (
-    <div className={`bg-white w-full flex flex-col items-center ${className}`}>
+    <div
+      className={`bg-white w-full py-3 flex flex-col items-center ${className}`}
+    >
       {title && (
         <div className="text-center mb-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">{title}</h2>

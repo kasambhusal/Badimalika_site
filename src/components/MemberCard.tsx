@@ -1,6 +1,7 @@
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
+import Image from "next/image";
 
 interface MemberCardProps {
   name: string;
@@ -24,7 +25,7 @@ export function MemberCard({
   className,
 }: MemberCardProps) {
   return (
-    <Card className={`overflow-hidden text-center ${className}`}>
+    <Card className={`overflow-hidden text-center ${className} p-0`}>
       {/* Top Header Color Section */}
       <div
         className="h-28 w-full rounded-t-xl"
@@ -34,10 +35,13 @@ export function MemberCard({
       {/* Image in Circle Overlapping Header */}
       <div className="-mt-12 flex justify-center">
         <div className="w-24 h-24 rounded-full  overflow-hidden shadow-md">
-          <img
+          <Image
             src={imageUrl || "/placeholder.svg"}
             alt={name}
-            className="w-full h-full object-cover"
+            width={96}
+            height={96}
+            priority
+            className="object-cover"
           />
         </div>
       </div>

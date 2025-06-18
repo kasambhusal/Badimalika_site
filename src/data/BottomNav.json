@@ -7,52 +7,23 @@
     },
          {
       "type": "link",
-      "label": "जनसंख्या",
-      "href": "/"
+      "label": "नक्सा",
+      "href": "/map"
     },
          {
       "type": "link",
-      "label": "घर धुरी",
-      "href": "/"
+      "label": "संघ संस्था",
+      "href": "/organization"
     },
          {
       "type": "link",
-      "label": "संस्था",
-      "href": "/"
+      "label": "योजना",
+      "href": "/plan"
     },
          {
       "type": "link",
-      "label": "म्याप भ्यू",
-      "href": "/"
-    },
-         {
-      "type": "link",
-      "label": "लगिन",
-      "href": "/"
+      "label": "सम्पर्क",
+      "href": "/contact"
     }
-    ,
-         {
-      "type": "dropdown",
-      "label": "टेस्ट",
-      "href": "/",
-      "id":"test",
-      "sub":[
-        {
-          "type":"link",
-          "label":"Test.1",
-          "href":"/"
-        },
-        {
-          "type":"link",
-          "label":"Test.2",
-          "href":"/"
-        },
-        {
-          "type":"link",
-          "label":"Test.3",
-          "href":"/"
-        }
       ]
-    }
-    ]
 }
