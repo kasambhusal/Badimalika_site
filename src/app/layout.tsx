@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "@/styles/globals.css";
 import Nav from "@/ui/Nav";
 import Footer from "@/ui/Footer";
+import { LoginProvider } from "@/context/login-context";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "बडीमालिका डिजिटल प्रोफाइल",
+  title: "हरिपुर डिजिटल प्रोफाइल",
   description: "A websit for badimalika municipality",
 };
 
@@ -29,9 +30,11 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <Nav />
-        {children}
-        <Footer />
+        <LoginProvider>
+          <Nav />
+          {children}
+          <Footer />
+        </LoginProvider>
       </body>
     </html>
   );

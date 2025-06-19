@@ -57,7 +57,7 @@ export function HalfDonutChart({
     return config;
   }, {} as Record<string, { label: string; color: string }>);
 
-  const handleSegmentClick = (data: any) => {
+  const handleSegmentClick = (data: HalfDonutData) => {
     setActiveSegment(activeSegment === data.name ? null : data.name);
   };
 

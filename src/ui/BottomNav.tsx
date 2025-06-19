@@ -3,9 +3,13 @@ import { useState } from "react";
 import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 import navData from "@/data/BottomNav.json";
+import type { NavData, DropdownNavItem, NavItem } from "../types/nav";
 
 const BottomNav = () => {
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
+
+  // Type assertion for the imported JSON data
+  const typedNavData = navData as NavData;
 
   const handleMouseEnter = (label: string) => {
     setHoveredItem(label);
@@ -15,9 +19,14 @@ const BottomNav = () => {
     setHoveredItem(null);
   };
 
+  // Type guard function to check if item is a dropdown - Fixed the 'any' type
+  const isDropdownItem = (item: NavItem): item is DropdownNavItem => {
+    return item.type === "dropdown";
+  };
+
   return (
     <nav
-      className="w-full bg-white border-t border-gray-100 shadow-xl"
+      className="w-full bg-white border-t border-gray-100 shadow-xl h-[30px]"
       role="navigation"
       aria-label="Main navigation"
     >
@@ -25,7 +34,7 @@ const BottomNav = () => {
         <div className="flex items-center justify-between">
           {/* Navigation Items */}
           <ul className="flex items-center space-x-12">
-            {navData.navData.map((item, index) => {
+            {typedNavData.navData.map((item, index) => {
               if (item.type === "link") {
                 return (
                   <li key={index}>
@@ -38,6 +47,9 @@ const BottomNav = () => {
                   </li>
                 );
               } else if (item.type === "dropdown") {
+                // Type guard ensures TypeScript knows this is a DropdownNavItem
+                const dropdownItem = isDropdownItem(item) ? item : null;
+
                 return (
                   <li
                     key={index}
@@ -54,32 +66,34 @@ const BottomNav = () => {
                       />
                     </button>
 
-                    {/* Dropdown Menu */}
-                    {item.sub && item.sub.length > 0 && (
-                      <div
-                        className={`absolute top-2/3 left-1/2 transform -translate-x-1/2 mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-lg z-50 transition-all duration-200 ease-out ${
-                          hoveredItem === item.label
-                            ? "opacity-100 translate-y-0 visible"
-                            : "opacity-0 translate-y-2 invisible"
-                        }`}
-                      >
-                        <div className="py-1">
-                          <ul role="menu" className="space-y-1">
-                            {item.sub.map((subItem, subIndex) => (
-                              <li key={subIndex} role="none">
-                                <Link
-                                  href={subItem.href}
-                                  className="block px-4 py-2 mx-1 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-900 focus:outline-none focus:bg-gray-50 focus:text-gray-900 transition-all duration-150 rounded-lg"
-                                  role="menuitem"
-                                >
-                                  {subItem.label}
-                                </Link>
-                              </li>
-                            ))}
-                          </ul>
+                    {/* Dropdown Menu - Only render if sub exists and has items */}
+                    {dropdownItem?.sub &&
+                      Array.isArray(dropdownItem.sub) &&
+                      dropdownItem.sub.length > 0 && (
+                        <div
+                          className={`absolute top-2/3 left-1/2 transform -translate-x-1/2 mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-lg z-50 transition-all duration-200 ease-out ${
+                            hoveredItem === item.label
+                              ? "opacity-100 translate-y-0 visible"
+                              : "opacity-0 translate-y-2 invisible"
+                          }`}
+                        >
+                          <div className="py-1">
+                            <ul role="menu" className="space-y-1">
+                              {dropdownItem.sub.map((subItem, subIndex) => (
+                                <li key={subIndex} role="none">
+                                  <Link
+                                    href={subItem.href}
+                                    className="block px-4 py-2 mx-1 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-900 focus:outline-none focus:bg-gray-50 focus:text-gray-900 transition-all duration-150 rounded-lg"
+                                    role="menuitem"
+                                  >
+                                    {subItem.label}
+                                  </Link>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
                   </li>
                 );
               }

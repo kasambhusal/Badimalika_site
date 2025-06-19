@@ -13,17 +13,16 @@
          {
       "type": "link",
       "label": "संघ संस्था",
-      "href": "/organization"
+      "href": "/organizations"
     },
          {
       "type": "link",
       "label": "योजना",
-      "href": "/plan"
+      "href": "/plans"
     },
          {
       "type": "link",
       "label": "सम्पर्क",
       "href": "/contact"
-    }
-      ]
+    }    ]
 }

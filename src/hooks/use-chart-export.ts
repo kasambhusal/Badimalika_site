@@ -1,28 +1,6 @@
 "use client"
 
 import { useCallback } from "react"
-// Import dom-to-image-more with inline type definitions
-import domtoimage from "dom-to-image-more"
-
-// Add TypeScript type definitions for dom-to-image-more
-declare module "dom-to-image-more" {
-  export interface DomToImageOptions {
-    filter?: (node: Node) => boolean
-    bgcolor?: string
-    width?: number
-    height?: number
-    style?: Record<string, string>
-    quality?: number
-    cacheBust?: boolean
-    imagePlaceholder?: string
-  }
-
-  export function toPng(node: HTMLElement, options?: DomToImageOptions): Promise<string>
-  export function toJpeg(node: HTMLElement, options?: DomToImageOptions): Promise<string>
-  export function toBlob(node: HTMLElement, options?: DomToImageOptions): Promise<Blob>
-  export function toPixelData(node: HTMLElement, options?: DomToImageOptions): Promise<Uint8ClampedArray>
-  export function toSvg(node: HTMLElement, options?: DomToImageOptions): Promise<string>
-}
 
 interface ExportOptions {
   elementId: string
@@ -81,6 +59,72 @@ const findChartElement = async (elementId: string): Promise<HTMLElement | null> 
 
   console.error("Could not find chart element with any strategy")
   return null
+}
+
+// Pure browser-based image generation using html2canvas-like approach
+const generateImageFromElement = async (
+  element: HTMLElement,
+  format: "png" | "jpeg",
+  quality = 1.0,
+): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    try {
+      // Create canvas
+      const canvas = document.createElement("canvas")
+      const ctx = canvas.getContext("2d")
+
+      if (!ctx) {
+        throw new Error("Canvas context not available")
+      }
+
+      // Set canvas size with higher resolution
+      const scale = 2
+      canvas.width = element.offsetWidth * scale
+      canvas.height = element.offsetHeight * scale
+      ctx.scale(scale, scale)
+
+      // Fill white background
+      ctx.fillStyle = "#ffffff"
+      ctx.fillRect(0, 0, element.offsetWidth, element.offsetHeight)
+
+      // Get SVG element
+      const svgElement = element.querySelector("svg")
+      if (!svgElement) {
+        throw new Error("SVG element not found")
+      }
+
+      // Convert SVG to image
+      const svgData = new XMLSerializer().serializeToString(svgElement)
+      const svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" })
+      const url = URL.createObjectURL(svgBlob)
+
+      const img = new Image()
+      img.crossOrigin = "anonymous"
+
+      img.onload = () => {
+        try {
+          ctx.drawImage(img, 0, 0, element.offsetWidth, element.offsetHeight)
+
+          const dataUrl = format === "jpeg" ? canvas.toDataURL("image/jpeg", quality) : canvas.toDataURL("image/png")
+
+          URL.revokeObjectURL(url)
+          resolve(dataUrl)
+        } catch (error) {
+          URL.revokeObjectURL(url)
+          reject(error)
+        }
+      }
+
+      img.onerror = () => {
+        URL.revokeObjectURL(url)
+        reject(new Error("Failed to load SVG image"))
+      }
+
+      img.src = url
+    } catch (error) {
+      reject(error)
+    }
+  })
 }
 
 export function useChartExport() {
@@ -148,28 +192,10 @@ export function useChartExport() {
         return
       }
 
-      console.log("Chart element found, generating PNG with dom-to-image...")
+      console.log("Chart element found, generating PNG...")
 
-      // Use dom-to-image-more for better SVG support
-      const dataUrl = await domtoimage.toPng(chartElement, {
-        quality: 1.0,
-        bgcolor: "#ffffff",
-        width: chartElement.offsetWidth * 2, // Higher resolution
-        height: chartElement.offsetHeight * 2,
-        style: {
-          transform: "scale(2)",
-          transformOrigin: "top left",
-          width: chartElement.offsetWidth + "px",
-          height: chartElement.offsetHeight + "px",
-        },
-        filter: (node: Node) => {
-          // Filter out unwanted elements
-          if (node instanceof Element && node.classList && node.classList.contains("no-export")) {
-            return false
-          }
-          return true
-        },
-      })
+      // Use our pure browser-based approach
+      const dataUrl = await generateImageFromElement(chartElement, "png", 1.0)
 
       // Convert data URL to blob and download
       const response = await fetch(dataUrl)
@@ -187,74 +213,7 @@ export function useChartExport() {
       console.log("PNG download completed successfully")
     } catch (error) {
       console.error("Error downloading PNG:", error)
-      console.error("Error details:", error)
-
-      // Fallback method using canvas
-      try {
-        console.log("Trying fallback canvas method...")
-        const canvas = document.createElement("canvas")
-        const ctx = canvas.getContext("2d")
-
-        if (!ctx) {
-          throw new Error("Canvas context not available")
-        }
-
-        const chartElement = await findChartElement(elementId)
-        if (!chartElement) {
-          throw new Error("Chart element not found")
-        }
-
-        // Set canvas size
-        canvas.width = chartElement.offsetWidth * 2
-        canvas.height = chartElement.offsetHeight * 2
-        ctx.scale(2, 2)
-
-        // Fill white background
-        ctx.fillStyle = "#ffffff"
-        ctx.fillRect(0, 0, chartElement.offsetWidth, chartElement.offsetHeight)
-
-        // Try to get SVG and draw it
-        const svgElement = chartElement.querySelector("svg")
-        if (svgElement) {
-          const svgData = new XMLSerializer().serializeToString(svgElement)
-          const svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" })
-          const url = URL.createObjectURL(svgBlob)
-
-          const img = new Image()
-          img.crossOrigin = "anonymous"
-
-          img.onload = () => {
-            ctx.drawImage(img, 0, 0, chartElement.offsetWidth, chartElement.offsetHeight)
-
-            canvas.toBlob((blob) => {
-              if (blob) {
-                const downloadUrl = URL.createObjectURL(blob)
-                const downloadLink = document.createElement("a")
-                downloadLink.href = downloadUrl
-                downloadLink.download = `${filename}.png`
-                document.body.appendChild(downloadLink)
-                downloadLink.click()
-                document.body.removeChild(downloadLink)
-                URL.revokeObjectURL(downloadUrl)
-                console.log("PNG download completed with fallback method")
-              }
-            }, "image/png")
-            URL.revokeObjectURL(url)
-          }
-
-          img.onerror = () => {
-            URL.revokeObjectURL(url)
-            alert("Failed to download PNG with both methods. Please try SVG download instead.")
-          }
-
-          img.src = url
-        } else {
-          throw new Error("SVG element not found")
-        }
-      } catch (fallbackError) {
-        console.error("Fallback method also failed:", fallbackError)
-        alert("Failed to download PNG. Please try SVG download instead or contact support.")
-      }
+      alert("Failed to download PNG. Please try SVG download instead.")
     }
   }, [])
 
@@ -268,28 +227,10 @@ export function useChartExport() {
         return
       }
 
-      console.log("Chart element found, generating JPEG with dom-to-image...")
+      console.log("Chart element found, generating JPEG...")
 
-      // Use dom-to-image-more for better SVG support
-      const dataUrl = await domtoimage.toJpeg(chartElement, {
-        quality: 0.95,
-        bgcolor: "#ffffff",
-        width: chartElement.offsetWidth * 2, // Higher resolution
-        height: chartElement.offsetHeight * 2,
-        style: {
-          transform: "scale(2)",
-          transformOrigin: "top left",
-          width: chartElement.offsetWidth + "px",
-          height: chartElement.offsetHeight + "px",
-        },
-        filter: (node: Node) => {
-          // Filter out unwanted elements
-          if (node instanceof Element && node.classList && node.classList.contains("no-export")) {
-            return false
-          }
-          return true
-        },
-      })
+      // Use our pure browser-based approach
+      const dataUrl = await generateImageFromElement(chartElement, "jpeg", 0.95)
 
       // Convert data URL to blob and download
       const response = await fetch(dataUrl)
@@ -307,77 +248,7 @@ export function useChartExport() {
       console.log("JPEG download completed successfully")
     } catch (error) {
       console.error("Error downloading JPEG:", error)
-
-      // Fallback method using canvas
-      try {
-        console.log("Trying fallback canvas method for JPEG...")
-        const canvas = document.createElement("canvas")
-        const ctx = canvas.getContext("2d")
-
-        if (!ctx) {
-          throw new Error("Canvas context not available")
-        }
-
-        const chartElement = await findChartElement(elementId)
-        if (!chartElement) {
-          throw new Error("Chart element not found")
-        }
-
-        // Set canvas size
-        canvas.width = chartElement.offsetWidth * 2
-        canvas.height = chartElement.offsetHeight * 2
-        ctx.scale(2, 2)
-
-        // Fill white background
-        ctx.fillStyle = "#ffffff"
-        ctx.fillRect(0, 0, chartElement.offsetWidth, chartElement.offsetHeight)
-
-        // Try to get SVG and draw it
-        const svgElement = chartElement.querySelector("svg")
-        if (svgElement) {
-          const svgData = new XMLSerializer().serializeToString(svgElement)
-          const svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" })
-          const url = URL.createObjectURL(svgBlob)
-
-          const img = new Image()
-          img.crossOrigin = "anonymous"
-
-          img.onload = () => {
-            ctx.drawImage(img, 0, 0, chartElement.offsetWidth, chartElement.offsetHeight)
-
-            canvas.toBlob(
-              (blob) => {
-                if (blob) {
-                  const downloadUrl = URL.createObjectURL(blob)
-                  const downloadLink = document.createElement("a")
-                  downloadLink.href = downloadUrl
-                  downloadLink.download = `${filename}.jpg`
-                  document.body.appendChild(downloadLink)
-                  downloadLink.click()
-                  document.body.removeChild(downloadLink)
-                  URL.revokeObjectURL(downloadUrl)
-                  console.log("JPEG download completed with fallback method")
-                }
-              },
-              "image/jpeg",
-              0.95,
-            )
-            URL.revokeObjectURL(url)
-          }
-
-          img.onerror = () => {
-            URL.revokeObjectURL(url)
-            alert("Failed to download JPEG with both methods. Please try SVG download instead.")
-          }
-
-          img.src = url
-        } else {
-          throw new Error("SVG element not found")
-        }
-      } catch (fallbackError) {
-        console.error("Fallback method also failed:", fallbackError)
-        alert("Failed to download JPEG. Please try SVG download instead or contact support.")
-      }
+      alert("Failed to download JPEG. Please try SVG download instead.")
     }
   }, [])
 
@@ -464,12 +335,12 @@ export function useChartExport() {
       } else {
         const requestFullscreen =
           chartElement.requestFullscreen ||
-          (chartElement as any).webkitRequestFullscreen ||
-          (chartElement as any).mozRequestFullScreen ||
-          (chartElement as any).msRequestFullscreen
+          (chartElement as HTMLElement & { webkitRequestFullscreen?: () => Promise<void> }).webkitRequestFullscreen ||
+          (chartElement as HTMLElement & { mozRequestFullScreen?: () => Promise<void> }).mozRequestFullScreen ||
+          (chartElement as HTMLElement & { msRequestFullscreen?: () => Promise<void> }).msRequestFullscreen
 
         if (requestFullscreen) {
-          requestFullscreen.call(chartElement).catch((err: any) => {
+          requestFullscreen.call(chartElement).catch((err: Error) => {
             console.error("Error entering fullscreen:", err)
             alert("Fullscreen mode not available. Please try pressing F11 manually.")
           })
