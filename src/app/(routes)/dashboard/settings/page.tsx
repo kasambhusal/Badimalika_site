@@ -307,7 +307,7 @@ export default function SettingsPage() {
 
       // Use Patch with proper authentication headers
       const response = await Patch({
-        url: `/update_profile/${userId}/`,
+        url: `/update_profile/`,
         data: updateData,
         config: {
           headers: getApiHeadersWithAuth(), // This includes the Authorization header
