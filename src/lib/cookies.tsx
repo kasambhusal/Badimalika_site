@@ -69,11 +69,19 @@ export class CookieManager {
     return value !== null && value !== "null" && value !== "undefined" && value.trim() !== ""
   }
 
-  // Set secure token with encryption-like encoding
-  static setSecureToken(token: string, userName: string, expiryDays = 1): void {
+  // Set secure token with encryption-like encoding and FIXED login time
+  static setSecureToken(
+    accessToken: string,
+    refreshToken: string,
+    userName: string,
+    loginTime: number,
+    expiryDays = 1,
+  ): void {
     const tokenData = {
-      token,
+      accessToken,
+      refreshToken,
       userName,
+      loginTime, // Store the actual login time passed from login function
       timestamp: Date.now(),
       expires: Date.now() + expiryDays * 24 * 60 * 60 * 1000,
     }
@@ -88,8 +96,14 @@ export class CookieManager {
     })
   }
 
-  // Get and validate secure token
-  static getSecureToken(): { token: string; userName: string; isValid: boolean } | null {
+  // Get and validate secure token with FIXED login time
+  static getSecureToken(): {
+    token: string
+    refreshToken: string
+    userName: string
+    loginTime: number
+    isValid: boolean
+  } | null {
     const encodedData = this.getCookie("auth_token")
 
     if (!encodedData) {
@@ -106,8 +120,10 @@ export class CookieManager {
       }
 
       return {
-        token: tokenData.token,
+        token: tokenData.accessToken,
+        refreshToken: tokenData.refreshToken,
         userName: tokenData.userName,
+        loginTime: tokenData.loginTime, // Return the original login time
         isValid,
       }
     } catch (error) {

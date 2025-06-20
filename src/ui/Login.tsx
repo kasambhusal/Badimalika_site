@@ -8,23 +8,36 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Eye, EyeOff, AlertCircle } from "lucide-react";
+import { Eye, EyeOff, AlertCircle, User, Lock } from "lucide-react";
 import { useLogin } from "@/context/login-context";
+import { Post } from "@/lib/api";
+import type { ErrorWithResponse } from "@/types/api";
 
 interface LoginData {
-  email: string;
+  user_name: string;
   password: string;
 }
 
 interface FormErrors {
-  email?: string;
+  user_name?: string;
   password?: string;
   general?: string;
 }
 
+interface LoginResponse {
+  id?: number;
+  user_name?: string;
+  groups?: unknown[];
+  tokens?: {
+    access: string;
+    refresh: string;
+  };
+  message?: string;
+}
+
 const Login: React.FC = () => {
   const [formData, setFormData] = useState<LoginData>({
-    email: "",
+    user_name: "",
     password: "",
   });
   const [errors, setErrors] = useState<FormErrors>({});
@@ -88,18 +101,16 @@ const Login: React.FC = () => {
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
 
-    // Email validation
-    if (!formData.email.trim()) {
-      newErrors.email = "Email is required";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
-      newErrors.email = "Please enter a valid email address";
+    // Username validation
+    if (!formData.user_name.trim()) {
+      newErrors.user_name = "Username is required";
+    } else if (formData.user_name.trim().length < 3) {
+      newErrors.user_name = "Username must be at least 3 characters";
     }
 
     // Password validation
     if (!formData.password) {
       newErrors.password = "Password is required";
-    } else if (formData.password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
     }
 
     setErrors(newErrors);
@@ -167,39 +178,61 @@ const Login: React.FC = () => {
     setErrors({});
 
     try {
-      // Simulate API call - Replace with your actual API endpoint
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Mock successful login - Replace with actual API response
-      const mockResponse = {
-        success: true,
-        tokens: {
-          access: "mock_jwt_token_" + Date.now(),
+      // Use your API endpoint
+      const response = (await Post({
+        url: "/login/",
+        data: {
+          user_name: formData.user_name,
+          password: formData.password,
         },
-        user_name: formData.email, // Use email as username
-      };
+      })) as LoginResponse;
 
-      if (mockResponse.success) {
+      console.log("Login response:", response);
+
+      if (response.tokens?.access && response.tokens?.refresh) {
         // Clear login attempts on successful login
         localStorage.removeItem("login_attempts");
         localStorage.removeItem("last_attempt_time");
         setLoginAttempts(0);
 
-        // Use the login context
+        // Use the login context with both tokens
         login({
-          token: mockResponse.tokens.access,
-          userName: mockResponse.user_name,
+          token: response.tokens.access,
+          refreshToken: response.tokens.refresh,
+          userName: response.user_name || formData.user_name,
+          id: response.id?.toString(),
         });
 
         router.push("/dashboard");
       } else {
-        throw new Error("Invalid credentials");
+        throw new Error(
+          response.message || "Invalid credentials - missing tokens"
+        );
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Login failed:", error);
       handleFailedLogin();
+
+      // Handle different types of errors
+      let errorMessage = "Login failed. Please check your credentials.";
+
+      // Check if it's an axios error with response data
+      const errorWithResponse = error as ErrorWithResponse;
+      if (errorWithResponse.response?.data?.detail) {
+        errorMessage = errorWithResponse.response.data.detail;
+      } else if (errorWithResponse.response?.data?.message) {
+        errorMessage = errorWithResponse.response.data.message;
+      } else if (errorWithResponse.response?.status === 401) {
+        errorMessage = "Invalid credentials, please try again";
+      } else if (
+        errorWithResponse.message &&
+        !errorWithResponse.message.includes("status")
+      ) {
+        errorMessage = errorWithResponse.message;
+      }
+
       setErrors({
-        general: "Login failed. Please check your credentials.",
+        general: errorMessage,
       });
     } finally {
       setLoading(false);
@@ -225,20 +258,27 @@ const Login: React.FC = () => {
         <CardContent className="p-8">
           <form onSubmit={onFinish} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium">
-                Email Address
+              <Label htmlFor="user_name" className="text-sm font-medium">
+                Username
               </Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="Enter your email"
-                value={formData.email}
-                onChange={(e) => handleInputChange("email", e.target.value)}
-                className={errors.email ? "border-red-500" : ""}
-                disabled={isBlocked}
-              />
-              {errors.email && (
-                <p className="text-sm text-red-600">{errors.email}</p>
+              <div className="relative">
+                <Input
+                  id="user_name"
+                  type="text"
+                  placeholder="Enter your username"
+                  value={formData.user_name}
+                  onChange={(e) =>
+                    handleInputChange("user_name", e.target.value)
+                  }
+                  className={
+                    errors.user_name ? "border-red-500 pl-10" : "pl-10"
+                  }
+                  disabled={isBlocked}
+                />
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              </div>
+              {errors.user_name && (
+                <p className="text-sm text-red-600">{errors.user_name}</p>
               )}
             </div>
 
@@ -255,9 +295,14 @@ const Login: React.FC = () => {
                   onChange={(e) =>
                     handleInputChange("password", e.target.value)
                   }
-                  className={errors.password ? "border-red-500 pr-10" : "pr-10"}
+                  className={
+                    errors.password
+                      ? "border-red-500 pl-10 pr-10"
+                      : "pl-10 pr-10"
+                  }
                   disabled={isBlocked}
                 />
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}

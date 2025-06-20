@@ -1,9 +1,9 @@
+import type React from "react";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "@/styles/globals.css";
-import Nav from "@/ui/Nav";
-import Footer from "@/ui/Footer";
 import { LoginProvider } from "@/context/login-context";
+import { ConditionalLayout } from "@/app/conditional-layout";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "हरिपुर डिजिटल प्रोफाइल",
-  description: "A websit for badimalika municipality",
+  description: "A website for badimalika municipality",
 };
 
 export default function RootLayout({
@@ -31,9 +31,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <LoginProvider>
-          <Nav />
-          {children}
-          <Footer />
+          <ConditionalLayout>{children}</ConditionalLayout>
         </LoginProvider>
       </body>
     </html>
