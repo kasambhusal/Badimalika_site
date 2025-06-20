@@ -19,6 +19,7 @@ import { CheckCircle, AlertCircle, Settings, User, Save } from "lucide-react";
 import { useLogin } from "@/context/login-context";
 import { Patch, Get } from "@/lib/api";
 import { getUserIdFromToken } from "@/lib/jwt-utils";
+import { getApiHeadersWithAuth } from "@/lib/api-headers";
 
 interface UserProfileResponse {
   id: number;
@@ -109,7 +110,7 @@ export default function SettingsPage() {
         console.log("Fetching user profile for ID:", userIdFromToken);
 
         // Get user profile using the extracted ID
-        const response = (await Get({
+        const response: UserProfileResponse = (await Get({
           url: `/users/${userIdFromToken}/`,
         })) as UserProfileResponse;
 
@@ -148,27 +149,17 @@ export default function SettingsPage() {
         let errorMessage =
           "Failed to load profile data. You can still update your information below.";
 
-        if (typeof error === "object" && error !== null) {
-          const err = error as {
-            response?: {
-              data?: { detail?: string; message?: string };
-              status?: number;
-            };
-            message?: string;
-          };
-
-          if (err.response?.data?.detail) {
-            errorMessage = err.response.data.detail;
-          } else if (err.response?.data?.message) {
-            errorMessage = err.response.data.message;
-          } else if (err.response?.status === 403) {
-            errorMessage =
-              "You do not have permission to view this profile data.";
-          } else if (err.response?.status === 401) {
-            errorMessage = "Authentication required. Please log in again.";
-          } else if (err.message) {
-            errorMessage = err.message;
-          }
+        if ((error as any).response?.data?.detail) {
+          errorMessage = (error as any).response.data.detail;
+        } else if ((error as any).response?.data?.message) {
+          errorMessage = (error as any).response.data.message;
+        } else if ((error as any).response?.status === 403) {
+          errorMessage =
+            "You do not have permission to view this profile data.";
+        } else if ((error as any).response?.status === 401) {
+          errorMessage = "Authentication required. Please log in again.";
+        } else if ((error as any).message) {
+          errorMessage = (error as any).message;
         }
 
         setErrors({
@@ -265,6 +256,13 @@ export default function SettingsPage() {
       return;
     }
 
+    if (!user?.token) {
+      setErrors({
+        general: "Authentication token not found. Please log in again.",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     setSubmitStatus(null);
     setErrors({});
@@ -293,10 +291,15 @@ export default function SettingsPage() {
 
       console.log("Updating profile for user ID:", userId);
       console.log("Update data:", updateData);
+      console.log("Using token:", user.token.substring(0, 20) + "...");
 
+      // Use Patch with proper authentication headers
       const response = await Patch({
-        url: `/update_profile/${userId}/`,
+        url: `/update_profile/`,
         data: updateData,
+        config: {
+          headers: getApiHeadersWithAuth(), // This includes the Authorization header
+        },
       });
 
       console.log("Profile updated successfully:", response);
@@ -312,35 +315,20 @@ export default function SettingsPage() {
       let errorMessage = "Failed to update profile. Please try again.";
 
       // Handle specific API error responses
-      if (typeof error === "object" && error !== null && "response" in error) {
-        const err = error as {
-          response?: {
-            data?: { detail?: string; message?: string };
-            status?: number;
-          };
-          message?: string;
-        };
-        if (err.response?.data?.detail) {
-          errorMessage = err.response.data.detail;
-        } else if (err.response?.data?.message) {
-          errorMessage = err.response.data.message;
-        } else if (err.response?.status === 403) {
-          errorMessage = "You do not have permission to update this profile.";
-        } else if (err.response?.status === 401) {
-          errorMessage = "Authentication expired. Please log in again.";
-        } else if (err.response?.status === 404) {
-          errorMessage = "Profile not found. Please contact support.";
-        } else if (err.response?.status === 400) {
-          errorMessage = "Invalid data provided. Please check your inputs.";
-        } else if (err.message) {
-          errorMessage = err.message;
-        }
-      } else if (
-        typeof error === "object" &&
-        error !== null &&
-        "message" in error
-      ) {
-        errorMessage = (error as { message?: string }).message ?? errorMessage;
+      if ((error as any).response?.data?.detail) {
+        errorMessage = (error as any).response.data.detail;
+      } else if ((error as any).response?.data?.message) {
+        errorMessage = (error as any).response.data.message;
+      } else if ((error as any).response?.status === 403) {
+        errorMessage = "You do not have permission to update this profile.";
+      } else if ((error as any).response?.status === 401) {
+        errorMessage = "Authentication expired. Please log in again.";
+      } else if ((error as any).response?.status === 404) {
+        errorMessage = "Profile not found. Please contact support.";
+      } else if ((error as any).response?.status === 400) {
+        errorMessage = "Invalid data provided. Please check your inputs.";
+      } else if ((error as any).message) {
+        errorMessage = (error as any).message;
       }
 
       setErrors({ general: errorMessage });
@@ -391,6 +379,11 @@ export default function SettingsPage() {
             Update your personal information and account details.
           </p>
           {userId && <p className="text-xs text-gray-500">User ID: {userId}</p>}
+          {user?.token && (
+            <p className="text-xs text-gray-500">
+              Token: {user.token.substring(0, 20)}...
+            </p>
+          )}
         </CardHeader>
 
         <CardContent className="p-6">
@@ -408,16 +401,16 @@ export default function SettingsPage() {
               <AlertCircle className="h-4 w-4 text-red-600" />
               <AlertDescription className="text-red-800">
                 <strong>Error:</strong> {errors.general}
-                {errors.general.includes("permission") && (
+                {errors.general.includes("Authentication") && (
                   <div className="mt-2 text-sm">
                     <p>This could be due to:</p>
                     <ul className="list-disc list-inside mt-1">
-                      <li>Insufficient user permissions</li>
-                      <li>Account restrictions</li>
-                      <li>Authentication token issues</li>
+                      <li>Expired authentication token</li>
+                      <li>Missing authorization headers</li>
+                      <li>Session timeout</li>
                     </ul>
                     <p className="mt-2">
-                      Please contact your administrator if this persists.
+                      Please try logging out and logging back in.
                     </p>
                   </div>
                 )}
@@ -604,7 +597,7 @@ export default function SettingsPage() {
             <div className="flex justify-end pt-4">
               <Button
                 type="submit"
-                disabled={isSubmitting || !userId}
+                disabled={isSubmitting || !userId || !user?.token}
                 className="bg-[#002c58] hover:bg-[#003d73] px-8 py-2 min-w-[120px]"
               >
                 <Save className="h-4 w-4 mr-2" />
