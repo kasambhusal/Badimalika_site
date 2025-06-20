@@ -63,6 +63,17 @@ interface FormErrors {
   general?: string;
 }
 
+interface ApiErrorResponse {
+  response?: {
+    data?: {
+      detail?: string;
+      message?: string;
+    };
+    status?: number;
+  };
+  message?: string;
+}
+
 const genderOptions = [
   { value: "1", label: "Male" },
   { value: "2", label: "Female" },
@@ -145,21 +156,22 @@ export default function SettingsPage() {
           }
         }
 
-        // Handle different types of errors
+        // Handle different types of errors with proper typing
+        const apiError = error as ApiErrorResponse;
         let errorMessage =
           "Failed to load profile data. You can still update your information below.";
 
-        if ((error as any).response?.data?.detail) {
-          errorMessage = (error as any).response.data.detail;
-        } else if ((error as any).response?.data?.message) {
-          errorMessage = (error as any).response.data.message;
-        } else if ((error as any).response?.status === 403) {
+        if (apiError.response?.data?.detail) {
+          errorMessage = apiError.response.data.detail;
+        } else if (apiError.response?.data?.message) {
+          errorMessage = apiError.response.data.message;
+        } else if (apiError.response?.status === 403) {
           errorMessage =
             "You do not have permission to view this profile data.";
-        } else if ((error as any).response?.status === 401) {
+        } else if (apiError.response?.status === 401) {
           errorMessage = "Authentication required. Please log in again.";
-        } else if ((error as any).message) {
-          errorMessage = (error as any).message;
+        } else if (apiError.message) {
+          errorMessage = apiError.message;
         }
 
         setErrors({
@@ -295,7 +307,7 @@ export default function SettingsPage() {
 
       // Use Patch with proper authentication headers
       const response = await Patch({
-        url: `/update_profile/`,
+        url: `/update_profile/${userId}/`,
         data: updateData,
         config: {
           headers: getApiHeadersWithAuth(), // This includes the Authorization header
@@ -312,23 +324,24 @@ export default function SettingsPage() {
     } catch (error: unknown) {
       console.error("Failed to update profile:", error);
 
+      const apiError = error as ApiErrorResponse;
       let errorMessage = "Failed to update profile. Please try again.";
 
-      // Handle specific API error responses
-      if ((error as any).response?.data?.detail) {
-        errorMessage = (error as any).response.data.detail;
-      } else if ((error as any).response?.data?.message) {
-        errorMessage = (error as any).response.data.message;
-      } else if ((error as any).response?.status === 403) {
+      // Handle specific API error responses with proper typing
+      if (apiError.response?.data?.detail) {
+        errorMessage = apiError.response.data.detail;
+      } else if (apiError.response?.data?.message) {
+        errorMessage = apiError.response.data.message;
+      } else if (apiError.response?.status === 403) {
         errorMessage = "You do not have permission to update this profile.";
-      } else if ((error as any).response?.status === 401) {
+      } else if (apiError.response?.status === 401) {
         errorMessage = "Authentication expired. Please log in again.";
-      } else if ((error as any).response?.status === 404) {
+      } else if (apiError.response?.status === 404) {
         errorMessage = "Profile not found. Please contact support.";
-      } else if ((error as any).response?.status === 400) {
+      } else if (apiError.response?.status === 400) {
         errorMessage = "Invalid data provided. Please check your inputs.";
-      } else if ((error as any).message) {
-        errorMessage = (error as any).message;
+      } else if (apiError.message) {
+        errorMessage = apiError.message;
       }
 
       setErrors({ general: errorMessage });
