@@ -3,14 +3,14 @@ import HomeMap from "./HomeMap";
 
 export default function Contact() {
   return (
-    <div className="w-full min-h-screen bg-gray-50 pb-8">
+    <div className="w-full min-h-screen  pb-8">
       {/* Header Section */}
-      <div className="bg-white border-b border-gray-200">
+      <div className="">
         <div className="max-w-7xl mx-auto px-4 py-8">
           <h1 className="text-4xl font-bold text-center text-gray-900 mb-4">
-            हाम्रो बारेमा
+            सम्पर्क र सुझाब
           </h1>
-          <div className="w-24 h-1 bg-blue-600 mx-auto"></div>
+          <div className="w-44 h-1 bg-blue-600 mx-auto"></div>
         </div>
       </div>
 
@@ -18,13 +18,10 @@ export default function Contact() {
       <div className="max-w-7xl mx-auto px-4 py-12">
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 mb-12">
           <p className="text-gray-700 leading-relaxed text-lg text-center">
-            हामी एक अग्रणी कम्पनी हौं जसले उच्च गुणस्तरको उत्पादन र सेवाहरू
-            प्रदान गर्दछ। Lorem ipsum, dolor sit amet consectetur adipisicing
-            elit. Consectetur, beatae obcaecati aut mollitia magni voluptas?
-            Numquam illo corporis enim laborum tempora porro odit, eius soluta
-            blanditiis nemo distinctio cupiditate optio earum, molestiae iste
-            nam nihil! Quae laborum harum eum esse quo voluptatibus rerum
-            officia quisquam recusandae quaerat, beatae repellat tempore?
+            सम्पर्क र सुझाब यदि तपाईंलाई हरिपुर नगरपालिकाको डिजिटल प्रोफ़ाइलसँग
+            सम्बन्धित कुनै जानकारी, गुनासो, सुझाव वा सेवाहरूको आवश्यकता छ भने
+            हामीलाई सम्पर्क गर्न सक्नुहुन्छ। हामी तपाईंको आवाजलाई सम्मानपूर्वक
+            सुन्ने र आवश्यक सहयोग पुर्‍याउने प्रतिबद्धता जनाउँछौं।
           </p>
         </div>
 
@@ -57,7 +54,7 @@ export default function Contact() {
                   <div>
                     <p className="text-sm text-gray-500">इमेल</p>
                     <p className="font-semibold text-gray-900">
-                      info@example.com
+                      info@haripurmun.gov.np
                     </p>
                   </div>
                 </div>

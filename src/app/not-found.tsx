@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Home, ArrowLeft, Search, Phone, Mail } from "lucide-react";
+import { Home, ArrowLeft, Phone, Mail } from "lucide-react";
 
 export default function NotFound() {
   return (
@@ -70,26 +70,13 @@ export default function NotFound() {
               </h5>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                 <Link
-                  href="/services"
-                  className="flex items-center text-[#002c58] hover:text-[#003d73] transition-colors"
-                >
-                  <Search className="h-4 w-4 mr-2" />
-                  सेवाहरू / Services
-                </Link>
-                <Link
                   href="/contact"
                   className="flex items-center text-[#002c58] hover:text-[#003d73] transition-colors"
                 >
                   <Phone className="h-4 w-4 mr-2" />
                   सम्पर्क / Contact
                 </Link>
-                <Link
-                  href="/about"
-                  className="flex items-center text-[#002c58] hover:text-[#003d73] transition-colors"
-                >
-                  <Mail className="h-4 w-4 mr-2" />
-                  हाम्रो बारेमा / About Us
-                </Link>
+
                 <Link
                   href="/login"
                   className="flex items-center text-[#002c58] hover:text-[#003d73] transition-colors"

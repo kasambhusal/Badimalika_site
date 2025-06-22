@@ -245,16 +245,16 @@ export default function FeedbackForm() {
     <div className="min-h-screen py-8 px-4">
       <div className="max-w-2xl mx-auto">
         <Card className="shadow-lg p-0">
-          <CardHeader className="bg-[#002c58] text-white rounded-t-lg">
+          <CardHeader
+            className="bg-[#002c58] text-white rounded-t- py-3"
+            style={{ borderRadius: "8px 8px 0 0" }}
+          >
             <CardTitle className="text-2xl font-bold text-center flex items-center justify-center">
               <Shield className="h-6 w-6 mr-2" />
               Feedback Form
             </CardTitle>
             <p className="text-blue-100 text-center mt-2">
               {"We'd love to hear from you! Please share your feedback below."}
-            </p>
-            <p className="text-blue-200 text-center text-sm mt-1">
-              🔒 Protected with math verification to prevent spam
             </p>
           </CardHeader>
 

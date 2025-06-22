@@ -6,6 +6,7 @@ import { Mail, Phone, X } from "lucide-react";
 interface ContactInfo {
   phone: string;
   email: string;
+  address?: string; // Optional address field
 }
 
 interface FooterLink {
@@ -29,12 +30,13 @@ interface FooterProps {
 
 const defaultContactInfo: ContactInfo = {
   phone: "+977-1-4211234",
-  email: "ito.haripurmun@gmail.com",
+  email: "info@haripurmun.gov.np",
+  address: "हरिपुर नगरपालिका, सर्लाही, मधेश प्रदेश", // Optional address
 };
 
 const defaultLinks: FooterLink[] = [
   { label: "गृहपृष्ठ", href: "/" },
-  { label: "न्याय भू", href: "/justice" },
+  { label: "नक्सा", href: "/map" },
   { label: "संघ संस्था", href: "/organizations" },
   { label: "योजना", href: "/plans" },
   { label: "सम्पर्क", href: "/contact" },
@@ -110,6 +112,29 @@ export default function Footer({
                 >
                   {contactInfo.email}
                 </a>
+              </div>
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center flex-shrink-0">
+                  {/* Location icon as SVG */}
+                  <svg
+                    className="w-4 h-4 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M12 21c-4.418 0-8-5.373-8-9.5A8 8 0 1 1 20 11.5C20 15.627 16.418 21 12 21z"
+                    />
+                    <circle cx="12" cy="11" r="3" />
+                  </svg>
+                </div>
+                <span className="text-white/90 break-words">
+                  {contactInfo.address}
+                </span>
               </div>
             </div>
           </div>

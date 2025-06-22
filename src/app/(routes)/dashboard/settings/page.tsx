@@ -301,9 +301,6 @@ export default function SettingsPage() {
         }
       });
 
-      console.log("Updating profile for user ID:", userId);
-      console.log("Update data:", updateData);
-      console.log("Using token:", user.token.substring(0, 20) + "...");
 
       // Use Patch with proper authentication headers
       await Patch({
@@ -392,11 +389,7 @@ export default function SettingsPage() {
             Update your personal information and account details.
           </p>
           {userId && <p className="text-xs text-gray-500">User ID: {userId}</p>}
-          {user?.token && (
-            <p className="text-xs text-gray-500">
-              Token: {user.token.substring(0, 20)}...
-            </p>
-          )}
+        
         </CardHeader>
 
         <CardContent className="p-6">
