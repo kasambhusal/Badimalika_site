@@ -255,7 +255,7 @@ const Login: React.FC = () => {
           <CardTitle className="text-2xl font-bold text-[#002c58]">
             हरिपुर नगरपालिका
           </CardTitle>
-          <p className="text-gray-600 text-sm mt-1">Government Portal Login</p>
+          <p className="text-gray-600 text-sm mt-1">Local Government Portal Login</p>
         </CardHeader>
 
         <CardContent className="p-8">
@@ -353,7 +353,7 @@ const Login: React.FC = () => {
           </form>
 
           <div className="mt-4 text-center text-xs text-gray-500">
-            <p>Secure Government Portal</p>
+            <p>Secure Local Government Portal</p>
           </div>
         </CardContent>
       </Card>

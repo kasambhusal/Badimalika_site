@@ -26,7 +26,7 @@ const BottomNav = () => {
 
   return (
     <nav
-      className="w-full bg-white border-t border-gray-100 shadow-xl py-3"
+      className="w-full overflow-x-auto bg-white border-t border-gray-100 shadow-xl py-3"
       role="navigation"
       aria-label="Main navigation"
     >

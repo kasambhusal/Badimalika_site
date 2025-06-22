@@ -274,7 +274,7 @@ export function useChartExport() {
         <!DOCTYPE html>
         <html>
           <head>
-            <title>Government Chart Report</title>
+            <title>Local Government Chart Report</title>
             <style>
               body { 
                 margin: 0; 
@@ -293,7 +293,7 @@ export function useChartExport() {
           </head>
           <body>
             <div style="text-align: center; margin-bottom: 20px;">
-              <h2>Government Chart Report</h2>
+              <h2>Local Government Chart Report</h2>
               <p>Generated on: ${new Date().toLocaleDateString()}</p>
             </div>
             ${chartHTML}

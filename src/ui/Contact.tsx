@@ -31,7 +31,7 @@ export default function Contact() {
           <div className="flex flex-col h-full min-h-[600px]">
             {/* Contact Information */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4 border-b border-gray-200 pb-2">
+              <h2 className="text-2xl font-bold text-gray-900 mb-5 border-b border-gray-200 pb-2">
                 सम्पर्क जानकारी
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -242,7 +242,7 @@ export default function FeedbackForm() {
   };
 
   return (
-    <div className="min-h-screen py-8 px-4">
+    <div className="min-h-screen px-4">
       <div className="max-w-2xl mx-auto">
         <Card className="shadow-lg p-0">
           <CardHeader
@@ -253,12 +253,9 @@ export default function FeedbackForm() {
               <Shield className="h-6 w-6 mr-2" />
               Feedback Form
             </CardTitle>
-            <p className="text-blue-100 text-center mt-2">
-              {"We'd love to hear from you! Please share your feedback below."}
-            </p>
           </CardHeader>
 
-          <CardContent className="p-6">
+          <CardContent className="px-6">
             {submitStatus === "success" && (
               <Alert className="mb-6 border-green-200 bg-green-50">
                 <CheckCircle className="h-4 w-4 text-green-600" />
@@ -278,9 +275,9 @@ export default function FeedbackForm() {
               </Alert>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-3">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
+                <div className="space-y-1">
                   <Label htmlFor="name" className="text-sm font-medium">
                     Your Name *
                   </Label>
@@ -338,7 +335,7 @@ export default function FeedbackForm() {
                 )}
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <Label htmlFor="address" className="text-sm font-medium">
                   Address *
                 </Label>
@@ -357,7 +354,7 @@ export default function FeedbackForm() {
                 )}
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <Label htmlFor="message" className="text-sm font-medium">
                   Message *
                 </Label>
@@ -381,7 +378,7 @@ export default function FeedbackForm() {
               </div>
 
               {/* Math CAPTCHA Section */}
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <Label className="text-sm font-medium flex items-center">
                   <Shield className="h-4 w-4 mr-1" />
                   Human Verification *
@@ -429,13 +426,10 @@ export default function FeedbackForm() {
                       {errors.captcha}
                     </p>
                   )}
-                  <p className="text-xs text-gray-500 text-center mt-2">
-                    This helps us prevent automated spam submissions
-                  </p>
                 </div>
               </div>
 
-              <div className="flex justify-end pt-4">
+              <div className="flex justify-end py-4">
                 <Button
                   type="submit"
                   disabled={isSubmitting}
@@ -445,17 +439,6 @@ export default function FeedbackForm() {
                 </Button>
               </div>
             </form>
-
-            {/* Security Notice */}
-            <div className="mt-6 pt-4 border-t border-gray-200">
-              <div className="flex items-center justify-center text-sm text-gray-500">
-                <Shield className="h-4 w-4 mr-2" />
-                <span>
-                  Protected by math verification to ensure legitimate
-                  submissions
-                </span>
-              </div>
-            </div>
           </CardContent>
         </Card>
       </div>

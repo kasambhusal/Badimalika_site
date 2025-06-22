@@ -76,7 +76,7 @@ export default function Footer({
   links = defaultLinks,
   socialLinks = defaultSocialLinks,
   copyrightText = "Copyright © 2025 . All Rights Reserved.",
-  organizationName = "Ministry of Federal Affairs and General Administration (MoFAGA).",
+  organizationName = "Haripur Municipality",
 }: FooterProps) {
   const currentYear = new Date().getFullYear();
 

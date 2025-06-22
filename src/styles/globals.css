@@ -10,7 +10,7 @@
 .top-nav {
   background-color: #002c58;
 }
-.footer{
+.footer {
   background-color: #002c58;
 }
 .municipality-text {
@@ -131,4 +131,115 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Custom marker styles */
+.custom-marker {
+  background: transparent !important;
+  border: none !important;
+}
+
+/* Leaflet popup customization */
+.leaflet-popup-content-wrapper {
+  border-radius: 8px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.leaflet-popup-content {
+  margin: 0;
+  font-family: inherit;
+}
+
+/* Mobile-specific map styles */
+@media (max-width: 768px) {
+  .leaflet-popup-content-wrapper {
+    border-radius: 6px;
+  }
+
+  .leaflet-popup-content {
+    font-size: 14px;
+  }
+
+  .leaflet-control-zoom {
+    border: none !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+  }
+
+  .leaflet-control-zoom a {
+    width: 36px !important;
+    height: 36px !important;
+    line-height: 36px !important;
+    font-size: 16px !important;
+  }
+}
+
+/* Smooth transitions for responsive elements */
+.transition-all {
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 300ms;
+}
+
+/* Touch-friendly buttons */
+@media (max-width: 1024px) {
+  button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .touch-target {
+    min-height: 48px;
+    min-width: 48px;
+  }
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+  .transition-all,
+  .animate-spin {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .border {
+    border-width: 2px;
+  }
+
+  .ring-2 {
+    --tw-ring-width: 3px;
+  }
+}
+
+/* Ensure Leaflet map stays below mobile sidebar */
+.leaflet-container {
+  z-index: 1 !important;
+}
+
+.leaflet-control-container {
+  z-index: 10 !important;
+}
+
+/* Mobile sidebar should be above everything */
+@media (max-width: 1024px) {
+  .mobile-sidebar {
+    z-index: 9999 !important;
+  }
+
+  .mobile-overlay {
+    z-index: 9998 !important;
+  }
+}
+
+/* Ensure map controls are accessible but below sidebar */
+.leaflet-control-zoom {
+  z-index: 50 !important;
+}
+
+/* Fix any potential stacking issues with map popups */
+.leaflet-popup-pane {
+  z-index: 100 !important;
 }

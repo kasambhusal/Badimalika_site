@@ -79,7 +79,6 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                     <p className="text-sm font-medium text-gray-900">
                       {user?.userName}
                     </p>
-                    <p className="text-xs text-gray-500">Government User</p>
                   </div>
                 </Button>
               </DropdownMenuTrigger>
