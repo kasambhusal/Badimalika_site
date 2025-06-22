@@ -1,136 +1,69 @@
 "use client";
-import { useState, useEffect } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
 
 const Hero2 = () => {
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-
-  // Sample images - replace with your actual municipality images
-  const images = [
-    {
-      src: "/assets/images/HeroImages/one.jpeg",
-      alt: "हरिपुर नगरपालिकाको प्राकृतिक दृश्य",
-    },
-    {
-      src: "/assets/images/HeroImages/two.jpeg",
-      alt: "हरिपुरको सांस्कृतिक धरोहर",
-    },
-    {
-      src: "/assets/images/HeroImages/three.jpeg",
-      alt: "स्थानीय जनजीवन",
-    },
-    {
-      src: "/assets/images/HeroImages/four.jpeg",
-      alt: "पर्यटकीय स्थलहरू",
-    },
-  ];
-
-  // Auto-slide functionality
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentImageIndex((prevIndex) =>
-        prevIndex === images.length - 1 ? 0 : prevIndex + 1
-      );
-    }, 5000); // Change image every 5 seconds
-
-    return () => clearInterval(interval);
-  }, [images.length]);
-
-  const goToPrevious = () => {
-    setCurrentImageIndex(
-      currentImageIndex === 0 ? images.length - 1 : currentImageIndex - 1
-    );
-  };
-
-  const goToNext = () => {
-    setCurrentImageIndex(
-      currentImageIndex === images.length - 1 ? 0 : currentImageIndex + 1
-    );
-  };
-
   return (
-    <section className="w-full py-12 lg:py-20">
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-          {/* Left Side - Image Carousel */}
-          <div className="relative">
-            <div className="relative overflow-hidden rounded-2xl shadow-2xl bg-white p-2">
-              <div className="relative h-80 lg:h-96">
-                <Image
-                  src={images[currentImageIndex].src || "/placeholder.svg"}
-                  alt={images[currentImageIndex].alt}
-                  fill
-                  className="object-cover rounded-xl transition-all duration-500"
-                  priority
-                />
-
-                {/* Navigation Arrows */}
-                <button
-                  onClick={goToPrevious}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-gray-800 p-2 rounded-full shadow-lg transition-all duration-200 hover:scale-110"
-                  aria-label="Previous image"
-                >
-                  <ChevronLeft className="w-5 h-5" />
-                </button>
-
-                <button
-                  onClick={goToNext}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-gray-800 p-2 rounded-full shadow-lg transition-all duration-200 hover:scale-110"
-                  aria-label="Next image"
-                >
-                  <ChevronRight className="w-5 h-5" />
-                </button>
+    <section className="w-full py-8 lg:py-16">
+      <div className="max-w-7xl mx-auto px-4 lg:px-6">
+        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-stretch">
+          {/* Left Side - Map */}
+          <div className="w-full flex flex-col">
+            <div className="bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col h-full">
+              {/* Header */}
+              <div className="bg-[#002c58] px-6 lg:px-8 py-4 lg:py-6 flex-shrink-0">
+                <h1 className="text-xl lg:text-3xl font-bold text-white text-center">
+                  स्रोत नक्सा
+                </h1>
               </div>
 
-              {/* Image Indicators */}
-              <div className="flex justify-center space-x-2 mt-4 pb-2">
-                {images.map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setCurrentImageIndex(index)}
-                    className={`w-2 h-2 rounded-full transition-all duration-200 ${
-                      index === currentImageIndex
-                        ? "bg-gray-800 w-6"
-                        : "bg-gray-400 hover:bg-gray-600"
-                    }`}
-                    aria-label={`Go to image ${index + 1}`}
+              {/* Content */}
+              <div className="flex-1 p-4 lg:p-6 flex items-center justify-center">
+                <div className="relative w-full h-full min-h-[300px] lg:min-h-[400px]">
+                  <Image
+                    src="/assets/images/haripur_map.jpg"
+                    alt="हरिपुर नगरपालिकाको नक्सा"
+                    fill
+                    className="object-contain"
+                    priority
                   />
-                ))}
+                </div>
               </div>
             </div>
           </div>
 
           {/* Right Side - Municipality Information */}
-          <div className="space-y-6">
-            <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+          <div className="w-full flex flex-col">
+            <div className="bg-[#f0f8ff] rounded-2xl shadow-xl overflow-hidden flex flex-col h-full">
               {/* Header */}
-              <div className="bg-gradient-to-r from-gray-700 to-gray-800 px-8 py-6">
-                <h1 className="text-2xl lg:text-3xl font-bold text-white text-center">
-                  बडीमालिकाको परिचय
+              <div className="bg-[#002c58] px-6 lg:px-8 py-4 lg:py-6 flex-shrink-0">
+                <h1 className="text-xl lg:text-3xl font-bold text-white text-center">
+                  संक्षिप्त परिचय
                 </h1>
               </div>
 
               {/* Content */}
-              <div className="px-8 py-8">
-                <div className="prose prose-lg max-w-none text-gray-700 leading-relaxed">
-                  <p className="text-base lg:text-lg mb-6">
-                    हरिपुर नगरपालिका सर्लाही जिल्लाको ११ नगरपालिका मध्येको एक
-                    हो। नगरपालिका घोषणा गर्दा हरिपुर, लक्ष्मीपुर (कोदरहवा),
-                    फरहदवा, पिडारी र जानकीनगर (१,२,३ र ५) गाविसहरू यसमा गाभिएका
-                    थिए।
+              <div className="px-6 lg:px-8 py-6 lg:py-8 flex-1 flex flex-col justify-center">
+                <div className="prose prose-sm lg:prose-lg max-w-none text-gray-700 leading-relaxed">
+                  <p className="text-sm lg:text-lg mb-4 lg:mb-6 text-justify">
+                    हरिपुर नगरपालिका सर्लाही जिल्लामा अवस्थित एक महत्वपूर्ण
+                    स्थानीय तह हो, जसको स्थापना वि.सं. २०७३ मा भएको हो। कुल ९
+                    वटा वडा रहेको यस नगरपालिकाको क्षेत्रफल ६६.८६ वर्ग कि.मि. मा
+                    फैलिएको छ। यहाँको भौगोलिक बनावट समथर छ र कृषिको लागि उपयुक्त
+                    मानिन्छ।
                   </p>
 
-                  <p className="text-base lg:text-lg mb-6">
-                    राष्ट्रिय जनगणना २०७८को जनगणना अनुसार हरिपुर नगरपालिकाको कुल
-                    जनसङ्ख्या ४३,२३३ रहेको छ भने यहाँ ८,३५० घरधुरी रहेका छन्।
+                  <p className="text-sm lg:text-lg mb-4 lg:mb-6 text-justify">
+                    यस नगरपालिकाको पूर्वमा ईश्वरपुर, लालबन्दी नगरपालिका र
+                    चन्द्रनगर गाउँपालिका, पश्चिममा बागमती नगरपालिका, उत्तरमा
+                    हरिवन नगरपालिका तथा दक्षिणमा कविलासी र बरहथवा नगरपालिकाहरू
+                    रहेका छन्। यहाँको सीमाना र सञ्जालले यसलाई व्यापार र आवागमनको
+                    दृष्टिले पनि सशक्त बनाएको छ।
                   </p>
-
-                  <p className="text-base lg:text-lg">
-                    यस नगरपालिकामा ३० प्रतिशत मध्यपहाडी गरिबीको रेखामुनी रहेका
-                    छन्। जिल्लाको सदरमुकाममा अवस्थित नगरपालिकाको रूप भने भौगोलिक
-                    विकटताको कारण क्षेत्रकाहरू हिसाबले यस नगरपालिकाको केन्द्र
-                    बाट सबै वडा बाट समान दुरीमा छैनन्।
+                  <p className="text-sm lg:text-lg mb-4 lg:mb-6 text-justify">
+                    हरिपुर नगरपालिकामा विभिन्न जातजाति र धर्मका मानिसहरू बसोबास
+                    गर्दै आएका छन्। सामाजिक सद्भाव, आपसी मेलमिलाप र सांस्कृतिक
+                    विविधता यहाँको पहिचान हो। चाडपर्व, भाषा, रितिरिवाजको
+                    बहुलताले यो नगरपालिका सांस्कृतिक दृष्टिले पनि समृद्ध छ।
                   </p>
                 </div>
               </div>

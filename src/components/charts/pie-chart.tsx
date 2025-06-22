@@ -1,8 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts"
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
+import { Cell, Pie, PieChart, ResponsiveContainer, Legend } from "recharts"
+import { ChartContainer, ChartTooltip } from "@/components/ui/chart"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ChartMenu } from "./chart-menu"
 
@@ -59,23 +59,26 @@ export function PieChartComponent({ data, title = "Pie Chart", className }: PieC
   return (
     <Card className={className}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-base font-medium">{title}</CardTitle>
+        <CardTitle className="text-sm sm:text-base font-medium truncate">{title}</CardTitle>
         <ChartMenu elementId={chartId} filename={title.toLowerCase().replace(/\s+/g, "-")} />
       </CardHeader>
-      <CardContent>
-        <div id={chartId} data-chart-id={chartId} className="chart-container">
-          <ChartContainer config={chartConfig} className="min-h-[300px]">
+      <CardContent className="p-2 sm:p-6">
+        <div id={chartId} data-chart-id={chartId} className="chart-container w-full">
+          <ChartContainer config={chartConfig} className="h-[250px] sm:h-[300px] md:h-[350px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={data}
                   cx="50%"
                   cy="50%"
-                  outerRadius={100}
+                  outerRadius="80%"
                   dataKey="value"
                   onClick={handleSegmentClick}
                   className="cursor-pointer transition-all duration-200"
-                  label={({ name, value }) => `${name}: ${value}`}
+                  label={({ name, percent }) => {
+                    const percentage = (percent * 100).toFixed(0)
+                    return window.innerWidth > 640 ? `${name}: ${percentage}%` : `${percentage}%`
+                  }}
                   labelLine={false}
                 >
                   {data.map((entry, index) => {
@@ -99,12 +102,35 @@ export function PieChartComponent({ data, title = "Pie Chart", className }: PieC
                         opacity={activeSegment === null || activeSegment === entry.name ? 1 : 0.7}
                         stroke={activeSegment === entry.name ? "#000" : "none"}
                         strokeWidth={activeSegment === entry.name ? 2 : 0}
-                        className="hover:brightness-90 transition-all duration-200"
+                        className="hover:brightness-110 transition-all duration-200"
                       />
                     )
                   })}
                 </Pie>
-                <ChartTooltip content={<ChartTooltipContent />} />
+                <ChartTooltip
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      const data = payload[0].payload as PieData
+                      return (
+                        <div className="bg-white p-2 border rounded shadow-lg">
+                          <p className="font-semibold text-sm">{data.name}</p>
+                          <p className="text-sm text-gray-600">Value: {data.value}</p>
+                          <p className="text-sm text-gray-600">
+                            Percentage: {(((payload[0].value as number) / data.value) * 100).toFixed(1)}%
+                          </p>
+                        </div>
+                      )
+                    }
+                    return null
+                  }}
+                />
+                <Legend
+                  wrapperStyle={{ fontSize: "12px" }}
+                  iconType="circle"
+                  layout="horizontal"
+                  align="center"
+                  verticalAlign="bottom"
+                />
               </PieChart>
             </ResponsiveContainer>
           </ChartContainer>

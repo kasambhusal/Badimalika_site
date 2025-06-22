@@ -19,7 +19,7 @@ export function MemberCard({
   position,
   phone,
   email,
-  address = "बडीमालिका",
+  address = "हरिपुर",
   imageUrl,
   headerColor,
   className,

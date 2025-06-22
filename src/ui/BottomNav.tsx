@@ -26,12 +26,12 @@ const BottomNav = () => {
 
   return (
     <nav
-      className="w-full bg-white border-t border-gray-100 shadow-xl h-[30px]"
+      className="w-full bg-white border-t border-gray-100 shadow-xl py-3"
       role="navigation"
       aria-label="Main navigation"
     >
       <div className="max-w-8/10 mx-auto px-6">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between ">
           {/* Navigation Items */}
           <ul className="flex items-center space-x-12">
             {typedNavData.navData.map((item, index) => {

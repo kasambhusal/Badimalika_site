@@ -74,18 +74,18 @@ export const LoginProvider: React.FC<LoginProviderProps> = ({ children }) => {
 
     setUser(newUser)
 
-    // Set secure cookie with the ACTUAL login time (8 hours expiry for government site security)
+    // Set secure cookie with 24 hours expiry instead of 8 hours
     CookieManager.setSecureToken(
       userData.token,
       userData.refreshToken,
       userData.userName,
-      actualLoginTime, // Pass the actual login time to be stored
-      0.33, // 8 hours
+      actualLoginTime,
+      1, // 24 hours instead of 0.33 (8 hours)
     )
 
-    // Set additional session tracking
+    // Set additional session tracking for 24 hours
     CookieManager.setCookie("user_session", "active", {
-      expires: 0.33,
+      expires: 1, // 24 hours instead of 0.33
       secure: true,
       sameSite: "strict",
     })
@@ -123,50 +123,11 @@ export const LoginProvider: React.FC<LoginProviderProps> = ({ children }) => {
     }
   }, [user?.refreshToken, router])
 
-  // Check auth on mount and periodically
+  // Check auth on mount only - no periodic checks
   useEffect(() => {
     checkAuthStatus()
     setIsLoading(false)
-
-    const interval = setInterval(
-      () => {
-        if (!checkAuthStatus()) {
-          logout()
-        }
-      },
-      5 * 60 * 1000,
-    )
-
-    return () => clearInterval(interval)
-  }, [checkAuthStatus, logout])
-
-  // Auto logout on tab visibility change (security feature)
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        // Set a timestamp when tab becomes hidden
-        CookieManager.setCookie("tab_hidden_time", Date.now().toString(), {
-          expires: 1,
-          secure: true,
-        })
-      } else {
-        // Check if tab was hidden for too long (30 minutes)
-        const hiddenTime = CookieManager.getCookie("tab_hidden_time")
-        if (hiddenTime) {
-          const timeDiff = Date.now() - Number.parseInt(hiddenTime)
-          const maxHiddenTime = 30 * 60 * 1000 // 30 minutes
-
-          if (timeDiff > maxHiddenTime && user) {
-            logout()
-          }
-          CookieManager.deleteCookie("tab_hidden_time")
-        }
-      }
-    }
-
-    document.addEventListener("visibilitychange", handleVisibilityChange)
-    return () => document.removeEventListener("visibilitychange", handleVisibilityChange)
-  }, [user, logout])
+  }, [checkAuthStatus])
 
   const value: LoginContextType = {
     user,

@@ -138,9 +138,9 @@ export function DashboardSidebar({ isOpen, onClose }: DashboardSidebarProps) {
         <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-white border-r border-gray-200 px-6 pb-4">
           {/* Logo */}
           <div className="flex h-16 shrink-0 items-center">
-            <h2 className="text-xl font-bold text-[#002c58]">
+            <Link href="/" className="text-xl font-bold text-[#002c58]">
               हरिपुर नगरपालिका
-            </h2>
+            </Link>
           </div>
 
           {/* Navigation */}

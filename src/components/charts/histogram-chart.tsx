@@ -1,8 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, XAxis, YAxis, Cell } from "recharts"
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, XAxis, YAxis, Cell, Tooltip } from "recharts"
+import { ChartContainer } from "@/components/ui/chart"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ChartMenu } from "./chart-menu"
 
@@ -15,7 +15,6 @@ interface HistogramData {
 interface HistogramChartProps {
   data: HistogramData[]
   title?: string
-  xAxisLabel?: string
   yAxisLabel?: string
   className?: string
 }
@@ -23,7 +22,6 @@ interface HistogramChartProps {
 export function HistogramChart({
   data,
   title = "Histogram",
-  xAxisLabel = "Range",
   yAxisLabel = "Frequency",
   className,
 }: HistogramChartProps) {
@@ -68,47 +66,38 @@ export function HistogramChart({
   return (
     <Card className={className}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-base font-medium">{title}</CardTitle>
+        <CardTitle className="text-sm sm:text-base font-medium truncate">{title}</CardTitle>
         <ChartMenu elementId={chartId} filename={title.toLowerCase().replace(/\s+/g, "-")} />
       </CardHeader>
-      <CardContent>
-        <div id={chartId} data-chart-id={chartId} className="chart-container">
-          <ChartContainer config={chartConfig} className="min-h-[300px]">
+      <CardContent className="p-2 sm:p-6">
+        <div id={chartId} data-chart-id={chartId} className="chart-container w-full">
+          <ChartContainer config={chartConfig} className="h-[250px] sm:h-[300px] md:h-[350px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" />
+              <BarChart data={data} margin={{ top: 20, right: 10, left: 10, bottom: 60 }}>
+                <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                 <XAxis
                   dataKey="range"
-                  tick={{ fontSize: 12 }}
-                  label={{
-                    value: xAxisLabel,
-                    position: "insideBottom",
-                    offset: -5,
-                  }}
+                  tick={{ fontSize: 10 }}
+                  angle={window.innerWidth < 640 ? -45 : 0}
+                  textAnchor={window.innerWidth < 640 ? "end" : "middle"}
+                  height={window.innerWidth < 640 ? 80 : 60}
+                  interval={0}
                 />
-                <YAxis
-                  tick={{ fontSize: 12 }}
-                  label={{
-                    value: yAxisLabel,
-                    angle: -90,
-                    position: "insideLeft",
-                  }}
-                />
-                <ChartTooltip
-                  content={(props) => {
-                    const payload = props?.payload as Array<{ payload: HistogramData }> | undefined
-                    return (
-                      <ChartTooltipContent>
-                        {payload && payload.length > 0 ? (
-                          <>
-                            <p className="font-bold">{payload[0].payload.range}</p>
-                            <p className="text-sm text-muted-foreground">
-                              Frequency: {payload[0].payload.frequency}
-                            </p>
-                          </>
-                        ) : null}
-                      </ChartTooltipContent>
-                    )
+                <YAxis tick={{ fontSize: 10 }} width={window.innerWidth < 640 ? 40 : 60} />
+                <Tooltip
+                  content={({ active, payload, label }) => {
+                    if (active && payload && payload.length) {
+                      const data = payload[0].payload as HistogramData
+                      return (
+                        <div className="bg-white p-3 border rounded shadow-lg">
+                          <p className="font-semibold text-sm">{label}</p>
+                          <p className="text-sm text-gray-600">
+                            <span className="font-medium">{yAxisLabel}:</span> {data.frequency}
+                          </p>
+                        </div>
+                      )
+                    }
+                    return null
                   }}
                   cursor={{ fill: "rgba(0, 0, 0, 0.1)" }}
                 />
@@ -125,7 +114,7 @@ export function HistogramChart({
                         key={`cell-${index}`}
                         fill={barColor}
                         opacity={activeBar === null || activeBar === entry.range ? 1 : 0.7}
-                        className="hover:brightness-90 transition-all duration-200"
+                        className="hover:brightness-110 transition-all duration-200"
                       />
                     )
                   })}

@@ -306,15 +306,15 @@ export default function SettingsPage() {
       console.log("Using token:", user.token.substring(0, 20) + "...");
 
       // Use Patch with proper authentication headers
-      const response = await Patch({
-        url: `/update_profile/`,
+      await Patch({
+        url: `/update_profile/${userId}/`,
         data: updateData,
         config: {
           headers: getApiHeadersWithAuth(), // This includes the Authorization header
         },
       });
 
-      console.log("Profile updated successfully:", response);
+      console.log("Profile updated successfully");
       setSubmitStatus("success");
 
       // Clear success message after 5 seconds

@@ -11,7 +11,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useLogin } from "@/context/login-context";
-import { Menu, User, LogOut, Settings, Bell, Clock } from "lucide-react";
+import { Menu, User, LogOut, Settings, Clock } from "lucide-react";
+import Link from "next/link";
 
 interface DashboardHeaderProps {
   onMenuClick: () => void;
@@ -67,14 +68,6 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
 
           {/* Right side */}
           <div className="flex items-center gap-4">
-            {/* Notifications */}
-            <Button variant="ghost" size="icon" className="relative">
-              <Bell className="h-5 w-5" />
-              <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 rounded-full text-xs text-white flex items-center justify-center">
-                3
-              </span>
-            </Button>
-
             {/* User menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -108,17 +101,24 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>
-                  <Settings className="mr-2 h-4 w-4" />
-                  Settings
+                  <Link
+                    href="/dashboard/settings"
+                    className="flex items-center"
+                  >
+                    <Settings className="mr-2 h-4 w-4" />
+                    Settings
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
-                  <User className="mr-2 h-4 w-4" />
-                  Profile
+                  <Link href="/dashboard/profile" className="flex items-center">
+                    <User className="mr-2 h-4 w-4" />
+                    Profile
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={handleLogout}
-                  className="text-red-600"
+                  className="text-red-600 cursor-pointer"
                   disabled={isLoggingOut}
                 >
                   <LogOut className="mr-2 h-4 w-4" />

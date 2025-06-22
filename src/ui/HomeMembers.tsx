@@ -21,29 +21,29 @@ interface HomeMemberProps {
 const defaultMembers: Member[] = [
   {
     id: "1",
+    name: "गोपाल पजियार",
+    position: "नगर प्रमुख ",
+    phone: "9844059638",
+    email: "gopalpajiyaresa@gmail.com",
+    imageUrl: "/assets/images/Members/gopalpariyar.jpg",
+    headerColor: "#7C93F0", // Light blue
+  },
+  {
+    id: "2",
+    name: "निलम देवि राय यादव",
+    position: "नगर उप प्रमुख",
+    phone: "9824870244",
+    email: "dmayor.haripurmun@gmail.com",
+    imageUrl: "/assets/images/Members/nelamyadav.jpeg",
+    headerColor: "#8B7CF0", // Purple
+  },
+  {
+    id: "3",
     name: "विनय पौडेल",
     position: "प्रमुख प्रशासकीय अधिकृत ",
     phone: "9854084666",
     email: "mail8haripurmun@gmail.com",
     imageUrl: "/assets/images/Members/vinay-poudel.jpg",
-    headerColor: "#7C93F0", // Light blue
-  },
-  {
-    id: "2",
-    name: "भुपेन्द्र कुमार सिंह",
-    position: "लेखा अधिकृत",
-    phone: "9854080113",
-    email: "",
-    imageUrl: "/assets/images/Members/vupendra-sing-poudel.jpeg",
-    headerColor: "#8B7CF0", // Purple
-  },
-  {
-    id: "3",
-    name: "विवेक कुमार यादव",
-    position: "इन्जिनियर ",
-    phone: "9823579764",
-    email: "smart45yadav@gmail.com ",
-    imageUrl: "/assets/images/Members/bibek-kumar-yadav.jpg",
     headerColor: "#4FFFB0", // Green
   },
 ];

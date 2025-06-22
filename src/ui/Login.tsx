@@ -66,7 +66,7 @@ const Login: React.FC = () => {
       const attemptCount = Number.parseInt(attempts);
       const lastAttemptTime = Number.parseInt(lastAttempt);
       const timeDiff = Date.now() - lastAttemptTime;
-      const blockDuration = 15 * 60 * 1000; // 15 minutes
+      const blockDuration = 2 * 60 * 1000; // 2 minutes instead of 15 minutes
 
       if (attemptCount >= 3 && timeDiff < blockDuration) {
         setIsBlocked(true);
@@ -140,7 +140,7 @@ const Login: React.FC = () => {
 
     if (newAttempts >= 3) {
       setIsBlocked(true);
-      setBlockTimeRemaining(15 * 60); // 15 minutes in seconds
+      setBlockTimeRemaining(2 * 60); // 2 minutes in seconds instead of 15 * 60
 
       const interval = setInterval(() => {
         setBlockTimeRemaining((prev) => {
@@ -217,18 +217,21 @@ const Login: React.FC = () => {
       let errorMessage = "Login failed. Please check your credentials.";
 
       // Check if it's an axios error with response data
-      const errorWithResponse = error as ErrorWithResponse;
-      if (errorWithResponse.response?.data?.detail) {
-        errorMessage = errorWithResponse.response.data.detail;
-      } else if (errorWithResponse.response?.data?.message) {
-        errorMessage = errorWithResponse.response.data.message;
-      } else if (errorWithResponse.response?.status === 401) {
+      if ((error as ErrorWithResponse).response?.data?.detail) {
+        errorMessage =
+          (error as ErrorWithResponse).response?.data?.detail ??
+          "Login failed. Please check your credentials.";
+      } else if ((error as ErrorWithResponse).response?.data?.message) {
+        errorMessage =
+          (error as ErrorWithResponse).response?.data?.message ??
+          "Login failed. Please check your credentials.";
+      } else if ((error as ErrorWithResponse).response?.status === 401) {
         errorMessage = "Invalid credentials, please try again";
       } else if (
-        errorWithResponse.message &&
-        !errorWithResponse.message.includes("status")
+        (error as ErrorWithResponse).message &&
+        !(error as ErrorWithResponse).response?.status
       ) {
-        errorMessage = errorWithResponse.message;
+        errorMessage = (error as ErrorWithResponse).message;
       }
 
       setErrors({

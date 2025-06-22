@@ -43,7 +43,6 @@ export default function HomeCharts() {
         <HistogramChart
           data={histogramData}
           title="Population Distribution"
-          xAxisLabel="Age Groups"
           yAxisLabel="Population Count"
         />
 
@@ -54,7 +53,6 @@ export default function HomeCharts() {
         <BarChartComponent
           data={barData}
           title="Quarterly Revenue"
-          xAxisLabel="Quarter"
           yAxisLabel="Revenue (in millions)"
         />
       </div>

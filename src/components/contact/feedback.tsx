@@ -1,14 +1,14 @@
 "use client";
 
 import type React from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CheckCircle, AlertCircle } from "lucide-react";
+import { CheckCircle, AlertCircle, Shield, RefreshCw } from "lucide-react";
 
 interface FeedbackData {
   name: string;
@@ -24,6 +24,13 @@ interface FormErrors {
   subject?: string;
   address?: string;
   message?: string;
+  captcha?: string;
+}
+
+interface MathCaptcha {
+  question: string;
+  answer: number;
+  operation: "addition" | "subtraction";
 }
 
 export default function FeedbackForm() {
@@ -40,6 +47,51 @@ export default function FeedbackForm() {
   const [submitStatus, setSubmitStatus] = useState<"success" | "error" | null>(
     null
   );
+  const [mathCaptcha, setMathCaptcha] = useState<MathCaptcha>({
+    question: "",
+    answer: 0,
+    operation: "addition",
+  });
+  const [captchaInput, setCaptchaInput] = useState("");
+
+  // Generate random math problem
+  const generateMathCaptcha = (): MathCaptcha => {
+    const operations = ["addition", "subtraction"] as const;
+    const operation = operations[Math.floor(Math.random() * operations.length)];
+
+    let num1: number, num2: number, answer: number, question: string;
+
+    if (operation === "addition") {
+      num1 = Math.floor(Math.random() * 20) + 1; // 1-20
+      num2 = Math.floor(Math.random() * 20) + 1; // 1-20
+      answer = num1 + num2;
+      question = `${num1} + ${num2} = ?`;
+    } else {
+      // For subtraction, ensure positive result
+      num1 = Math.floor(Math.random() * 30) + 10; // 10-39
+      num2 = Math.floor(Math.random() * (num1 - 1)) + 1; // 1 to (num1-1)
+      answer = num1 - num2;
+      question = `${num1} - ${num2} = ?`;
+    }
+
+    return { question, answer, operation };
+  };
+
+  // Initialize math captcha on component mount
+  useEffect(() => {
+    setMathCaptcha(generateMathCaptcha());
+  }, []);
+
+  const refreshCaptcha = () => {
+    setMathCaptcha(generateMathCaptcha());
+    setCaptchaInput("");
+    if (errors.captcha) {
+      setErrors((prev) => ({
+        ...prev,
+        captcha: undefined,
+      }));
+    }
+  };
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
@@ -81,6 +133,19 @@ export default function FeedbackForm() {
       newErrors.message = "Message must be less than 500 characters";
     }
 
+    // Math CAPTCHA validation
+    if (!captchaInput.trim()) {
+      newErrors.captcha =
+        "Please solve the math problem to verify you're human";
+    } else {
+      const userAnswer = Number.parseInt(captchaInput.trim());
+      if (isNaN(userAnswer)) {
+        newErrors.captcha = "Please enter a valid number";
+      } else if (userAnswer !== mathCaptcha.answer) {
+        newErrors.captcha = "Incorrect answer. Please try again.";
+      }
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -98,6 +163,31 @@ export default function FeedbackForm() {
         [field]: undefined,
       }));
     }
+  };
+
+  const handleCaptchaChange = (value: string) => {
+    setCaptchaInput(value);
+
+    // Clear captcha error when user starts typing
+    if (errors.captcha) {
+      setErrors((prev) => ({
+        ...prev,
+        captcha: undefined,
+      }));
+    }
+  };
+
+  const resetForm = () => {
+    setFormData({
+      name: "",
+      phone: "",
+      subject: "",
+      address: "",
+      message: "",
+    });
+    setCaptchaInput("");
+    setErrors({});
+    setMathCaptcha(generateMathCaptcha());
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -118,6 +208,12 @@ export default function FeedbackForm() {
       // Log feedback data to console
       console.log("=== FEEDBACK SUBMISSION ===");
       console.log("Timestamp:", new Date().toISOString());
+      console.log("Math CAPTCHA:", {
+        question: mathCaptcha.question,
+        correctAnswer: mathCaptcha.answer,
+        userAnswer: Number.parseInt(captchaInput),
+        verified: Number.parseInt(captchaInput) === mathCaptcha.answer,
+      });
       console.log("Feedback Data:", {
         name: formData.name.trim(),
         phone: formData.phone.trim(),
@@ -125,18 +221,12 @@ export default function FeedbackForm() {
         address: formData.address.trim(),
         message: formData.message.trim(),
         characterCount: formData.message.trim().length,
+        humanVerified: true,
       });
       console.log("=== END FEEDBACK ===");
 
       // Reset form on successful submission
-      setFormData({
-        name: "",
-        phone: "",
-        subject: "",
-        address: "",
-        message: "",
-      });
-
+      resetForm();
       setSubmitStatus("success");
 
       // Clear success message after 5 seconds
@@ -156,11 +246,15 @@ export default function FeedbackForm() {
       <div className="max-w-2xl mx-auto">
         <Card className="shadow-lg p-0">
           <CardHeader className="bg-[#002c58] text-white rounded-t-lg">
-            <CardTitle className="text-2xl font-bold text-center">
+            <CardTitle className="text-2xl font-bold text-center flex items-center justify-center">
+              <Shield className="h-6 w-6 mr-2" />
               Feedback Form
             </CardTitle>
             <p className="text-blue-100 text-center mt-2">
               {"We'd love to hear from you! Please share your feedback below."}
+            </p>
+            <p className="text-blue-200 text-center text-sm mt-1">
+              🔒 Protected with math verification to prevent spam
             </p>
           </CardHeader>
 
@@ -170,7 +264,7 @@ export default function FeedbackForm() {
                 <CheckCircle className="h-4 w-4 text-green-600" />
                 <AlertDescription className="text-green-800">
                   Thank you for your feedback! Your message has been submitted
-                  successfully and logged to the console.
+                  successfully and verified for security.
                 </AlertDescription>
               </Alert>
             )}
@@ -286,16 +380,82 @@ export default function FeedbackForm() {
                 </div>
               </div>
 
+              {/* Math CAPTCHA Section */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium flex items-center">
+                  <Shield className="h-4 w-4 mr-1" />
+                  Human Verification *
+                </Label>
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                  <div className="flex items-center justify-center space-x-4">
+                    <div className="text-center">
+                      <p className="text-sm text-gray-600 mb-2">
+                        Please solve this simple math problem:
+                      </p>
+                      <div className="bg-white border-2 border-[#002c58] rounded-lg p-4 inline-block">
+                        <span className="text-2xl font-bold text-[#002c58] font-mono">
+                          {mathCaptcha.question}
+                        </span>
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={refreshCaptcha}
+                      className="flex items-center"
+                      title="Generate new problem"
+                    >
+                      <RefreshCw className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <div className="mt-4 flex justify-center">
+                    <div className="w-32">
+                      <Input
+                        type="number"
+                        placeholder="Your answer"
+                        value={captchaInput}
+                        onChange={(e) => handleCaptchaChange(e.target.value)}
+                        className={`text-center text-lg font-semibold ${
+                          errors.captcha
+                            ? "border-red-500 focus:border-red-500"
+                            : ""
+                        }`}
+                      />
+                    </div>
+                  </div>
+                  {errors.captcha && (
+                    <p className="text-sm text-red-600 text-center mt-2">
+                      {errors.captcha}
+                    </p>
+                  )}
+                  <p className="text-xs text-gray-500 text-center mt-2">
+                    This helps us prevent automated spam submissions
+                  </p>
+                </div>
+              </div>
+
               <div className="flex justify-end pt-4">
                 <Button
                   type="submit"
                   disabled={isSubmitting}
-                  className="text-white px-8 py-2 min-w-[120px]"
+                  className="text-white px-8 py-2 min-w-[120px] bg-[#002c58] hover:bg-[#003d73]"
                 >
                   {isSubmitting ? "Submitting..." : "Send Message"}
                 </Button>
               </div>
             </form>
+
+            {/* Security Notice */}
+            <div className="mt-6 pt-4 border-t border-gray-200">
+              <div className="flex items-center justify-center text-sm text-gray-500">
+                <Shield className="h-4 w-4 mr-2" />
+                <span>
+                  Protected by math verification to ensure legitimate
+                  submissions
+                </span>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>

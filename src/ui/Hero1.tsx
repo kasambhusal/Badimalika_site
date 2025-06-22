@@ -1,103 +1,70 @@
 import HeroCard from "@/components/HeroCard";
-import {
-  Home,
-  Users,
-  User,
-  UserCheck,
-  Accessibility,
-  Hand,
-  Droplet,
-  Shield,
-  Plane,
-  Trees,
-} from "lucide-react";
+import { Home, Users, User, UserCheck } from "lucide-react";
 
 const Hero1 = () => {
   const statsData = [
     {
       icon: Home,
       title: "घरधुरी",
-      number: 3185,
+      number: 8390,
     },
     {
       icon: Users,
       title: "जनसंख्या",
-      number: 16944,
+      number: 43223,
     },
     {
       icon: User,
       title: "पुरुष संख्या",
-      number: 8792,
+      number: 21141,
     },
     {
       icon: UserCheck,
       title: "महिला संख्या",
-      number: 8152,
-    },
-    {
-      icon: Accessibility,
-      title: "असक्षमता",
-      number: 218,
-    },
-    {
-      icon: Hand,
-      title: "शौचालय भएको",
-      number: 3136,
-    },
-    {
-      icon: Droplet,
-      title: "पाइप धारा सार्वजानिक",
-      subtitle: "(खानेपानीको मुख्य श्रोत)",
-      number: "62.61%",
-    },
-    {
-      icon: Shield,
-      title: "सामाजिक सुरक्षा भत्ता",
-      number: 1461,
-    },
-    {
-      icon: Plane,
-      title: "बैदेशिक रोजगार",
-      number: 500,
-    },
-    {
-      icon: Trees,
-      title: "वन क्षेत्र",
-      number: "10.99%",
+      number: 22012,
     },
   ];
 
   return (
-    <section className="w-full  lg:py-16">
-      <div className="max-w-7xl mx-auto px-6">
-        {/* Section Header */}
-        <div className="text-center mb-12">
-          <h2 className="text-3xl lg:text-4xl font-bold text-gray-800 mb-4">
-            हरिपुर नगरपालिकाको तथ्याङ्क
+    <section
+      className="w-full bg-[#002c58] py-12 lg:py-16 px-6 lg:px-12"
+      style={{ boxShadow: "0 10px 30px rgba(59, 130, 246, 0.25)" }} // tailwind's blue-500 as rgba
+    >
+      <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-8 lg:gap-12">
+        {/* Left Side - Welcome Text */}
+        <div className="w-full lg:w-1/2 text-center lg:text-left flex flex-col gap-3 items-center lg:items-start">
+          <h1
+            className="text-3xl lg:text-5xl font-bold text-white "
+            style={{ lineHeight: "1.2" }}
+          >
+            हरिपुर नगरपालिकाको
+          </h1>
+          <h2
+            className="text-3xl lg:text-5xl font-bold text-yellow-400 "
+            style={{ lineHeight: "1.2" }}
+          >
+            डिजिटल प्रोफाइलमा
           </h2>
-          <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-            हाम्रो नगरपालिकाका मुख्य तथ्याङ्कहरू र जनसांख्यिकीय विवरणहरू
+          <p
+            className="text-2xl lg:text-5xl text-white "
+            style={{ lineHeight: "1.2" }}
+          >
+            तपाईंलाई स्वागत छ ।
           </p>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8">
-          {statsData.map((stat, index) => (
-            <HeroCard
-              key={index}
-              icon={stat.icon}
-              title={stat.title}
-              number={stat.number}
-              subtitle={stat.subtitle}
-            />
-          ))}
-        </div>
-
-        {/* Additional Info */}
-        <div className="mt-12 text-center">
-          <p className="text-gray-500 text-sm">
-            * तथ्याङ्कहरू नेपाल सरकारको केन्द्रीय तथ्याङ्क विभागको आधारमा
-          </p>
+        {/* Right Side - Stats Grid */}
+        <div className="w-full lg:w-1/2">
+          <div className="grid grid-cols-2 gap-4 lg:gap-6 max-w-lg mx-auto">
+            {statsData.map((stat, index) => (
+              <HeroCard
+                key={index}
+                icon={stat.icon}
+                title={stat.title}
+                number={stat.number}
+              />
+            ))}
+          </div>
         </div>
       </div>
     </section>
