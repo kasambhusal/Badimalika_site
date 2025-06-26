@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState, memo } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import { Button } from "@/components/ui/button";
+import { Eye, EyeOff } from "lucide-react";
 import type { LayerInfo } from "@/hooks/use-map-data";
 import type { GeoJSONResponse } from "@/lib/map-api-client";
 
@@ -38,6 +40,7 @@ const MapComponent = memo(function MapComponent({
   const wardBoundariesRef = useRef<L.LayerGroup | null>(null);
   const wardLabelsRef = useRef<L.LayerGroup | null>(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [showWardBoundaries, setShowWardBoundaries] = useState(true);
   const defaultViewRef = useRef<{
     center: L.LatLngExpression;
     zoom: number;
@@ -80,7 +83,7 @@ const MapComponent = memo(function MapComponent({
     };
   }, []);
 
-  // Handle ward boundaries with proper data structure
+  // Handle ward boundaries with proper data structure and toggle functionality
   useEffect(() => {
     if (!mapInstanceRef.current || !wardBoundariesLoaded) return;
 
@@ -267,30 +270,64 @@ const MapComponent = memo(function MapComponent({
         }
       });
 
-      // Add layers to map
-      wardBoundaries.addTo(map);
-      wardLabels.addTo(map);
+      // Store references to the layers
       wardBoundariesRef.current = wardBoundaries;
       wardLabelsRef.current = wardLabels;
 
-      // Fit map to ward boundaries
-      try {
-        const bounds = wardBoundaries.getBounds();
-        if (bounds.isValid()) {
-          map.fitBounds(bounds, {
-            padding: isMobile ? [10, 10] : [10, 10], // reduced padding
-            maxZoom: isMobile ? 16 : 17, // allow tighter zoom
-            animate: true,
-            duration: 1.0, // optional smooth zoom
-          });
+      // Add layers to map only if showWardBoundaries is true
+      if (showWardBoundaries) {
+        wardBoundaries.addTo(map);
+        wardLabels.addTo(map);
+
+        // Fit map to ward boundaries
+        try {
+          const bounds = wardBoundaries.getBounds();
+          if (bounds.isValid()) {
+            map.fitBounds(bounds, {
+              padding: isMobile ? [10, 10] : [10, 10], // reduced padding
+              maxZoom: isMobile ? 16 : 17, // allow tighter zoom
+              animate: true,
+              duration: 1.0, // optional smooth zoom
+            });
+          }
+        } catch (error) {
+          console.warn("Could not fit ward bounds:", error);
         }
-      } catch (error) {
-        console.warn("Could not fit ward bounds:", error);
       }
     } else {
       console.warn("No ward features found in data");
     }
-  }, [wardBoundariesLoaded, getLayerData, isMobile]);
+  }, [wardBoundariesLoaded, getLayerData, isMobile, showWardBoundaries]);
+
+  // Handle ward boundaries visibility toggle
+  useEffect(() => {
+    if (
+      !mapInstanceRef.current ||
+      !wardBoundariesRef.current ||
+      !wardLabelsRef.current
+    )
+      return;
+
+    const map = mapInstanceRef.current;
+
+    if (showWardBoundaries) {
+      // Add ward boundaries and labels to map
+      if (!map.hasLayer(wardBoundariesRef.current)) {
+        wardBoundariesRef.current.addTo(map);
+      }
+      if (!map.hasLayer(wardLabelsRef.current)) {
+        wardLabelsRef.current.addTo(map);
+      }
+    } else {
+      // Remove ward boundaries and labels from map
+      if (map.hasLayer(wardBoundariesRef.current)) {
+        map.removeLayer(wardBoundariesRef.current);
+      }
+      if (map.hasLayer(wardLabelsRef.current)) {
+        map.removeLayer(wardLabelsRef.current);
+      }
+    }
+  }, [showWardBoundaries]);
 
   // Handle other layers efficiently
   useEffect(() => {
@@ -366,12 +403,42 @@ const MapComponent = memo(function MapComponent({
     });
   }, [activeLayers, getLayerData]);
 
+  const toggleWardBoundaries = () => {
+    setShowWardBoundaries(!showWardBoundaries);
+  };
+
   return (
-    <div
-      ref={mapRef}
-      className="h-full w-full"
-      style={{ minHeight: "400px" }}
-    />
+    <div className="relative h-full w-19/20">
+      {/* Ward Boundaries Toggle Button */}
+      {wardBoundariesLoaded && (
+        <div className="absolute top-4 left-4 z-[1000]">
+          <Button
+            onClick={toggleWardBoundaries}
+            variant="outline"
+            size="sm"
+            className="bg-white/90 backdrop-blur-sm border-gray-300 hover:bg-white shadow-md"
+          >
+            {showWardBoundaries ? (
+              <>
+                <EyeOff className="w-4 h-4 mr-2" />
+                वार्ड सीमाना लुकाउनुहोस्
+              </>
+            ) : (
+              <>
+                <Eye className="w-4 h-4 mr-2" />
+                वार्ड सीमाना देखाउनुहोस्
+              </>
+            )}
+          </Button>
+        </div>
+      )}
+
+      <div
+        ref={mapRef}
+        className="h-full w-full"
+        style={{ minHeight: "400px" }}
+      />
+    </div>
   );
 });
 

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { Get, Delete, Post } from "@/lib/api"
+import { Get, Delete, Patch } from "@/lib/api"
 import type { Feedback, FeedbackListResponse, FeedbackFilters } from "@/types/feedback"
 
 export function useFeedback() {
@@ -69,7 +69,7 @@ export function useFeedback() {
 
   const updateFeedbackStatus = useCallback(async (id: number, status: "pending" | "resolved"): Promise<boolean> => {
     try {
-      await Post({
+      await Patch({
         url: `/feedback/${id}/update-status/`,
         data: { status },
       })

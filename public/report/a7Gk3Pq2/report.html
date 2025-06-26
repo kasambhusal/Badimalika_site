@@ -1,0 +1,1230 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Haripur Survey Report Viewer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <!-- Add html2pdf.js and html2canvas for export features -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+      body {
+        background: #f8f9fa;
+        font-family: "Noto Sans Devanagari", "Noto Sans", Arial, sans-serif;
+      }
+      .ward-section {
+        margin-bottom: 2rem;
+      }
+      .section-title {
+        margin-top: 1.5rem;
+      }
+      .table-responsive {
+        margin-bottom: 2.5rem;
+      }
+      .metadata {
+        font-size: 1em;
+        color: #555;
+      }
+      .report-title {
+        font-size: 1.7rem;
+        font-weight: bold;
+        margin-bottom: 1.5rem;
+        letter-spacing: 1px;
+      }
+      .table-report th,
+      .table-report td {
+        font-size: 1.08em;
+        padding: 0.55em 0.7em;
+      }
+      .table-report th {
+        background: #f8d7b7 !important;
+        color: #222 !important;
+        font-weight: bold;
+        border-bottom: 2px solid #bfa16b;
+      }
+      .table-report td.ward-col,
+      .table-report th.ward-col {
+        background: #ffe0b2 !important;
+        color: #222 !important;
+        font-weight: bold;
+        position: sticky;
+        left: 0;
+        z-index: 2;
+        min-width: 80px;
+        max-width: 100px;
+        width: 90px;
+        text-align: center;
+        white-space: nowrap;
+      }
+      .table-report th.ward-col {
+        z-index: 3;
+      }
+      .table-report tr.summary-row td {
+        background: #e2e3e5 !important;
+        font-weight: bold;
+      }
+      .table-report {
+        border: 1.5px solid #bfa16b;
+        border-radius: 4px;
+        box-shadow: 0 2px 8px #0001;
+      }
+      .table-report thead th {
+        text-align: center;
+        vertical-align: middle;
+      }
+      .table-report tbody td {
+        text-align: center;
+      }
+      .table-report th,
+      .table-report td {
+        border: 1px solid #bfa16b !important;
+      }
+      /* Ensure header row is always colored, even with Bootstrap */
+      .table-report thead tr th {
+        background: #f8d7b7 !important;
+        color: #222 !important;
+      }
+      /* Ensure first column (ward) is always colored, even with Bootstrap */
+      .table-report tbody tr td.ward-col,
+      .table-report thead tr th.ward-col {
+        background: #ffe0b2 !important;
+        color: #222 !important;
+        font-weight: bold;
+      }
+      /* Remove Bootstrap's sticky hover/active coloring on first column */
+      .table-report tbody tr:hover td.ward-col {
+        background: #ffd699 !important;
+      }
+      /* Print styles for report look */
+      @media print {
+        body {
+          background: #fff;
+        }
+        .container {
+          max-width: 100%;
+        }
+        .table-report {
+          box-shadow: none;
+        }
+      }
+      .table-report,
+      .table-responsive {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+      /* Hide table download buttons in print/PDF */
+      .table-download-btns {
+        display: block;
+      }
+      @media print {
+        .table-download-btns {
+          display: none !important;
+        }
+      }
+      /* Modal appearance improvements */
+      .modal.fade#pdfModal {
+        display: none;
+        background: rgba(0, 0, 0, 0.25) !important;
+      }
+      #pdfModal .modal-dialog {
+        margin-top: 12vh;
+      }
+      #pdfModal .modal-content {
+        border-radius: 10px;
+        box-shadow: 0 4px 32px #0002;
+        border: 1.5px solid #bfa16b;
+      }
+      #pdfModal .modal-header {
+        background: #f8d7b7;
+        border-bottom: 1px solid #bfa16b;
+      }
+      #pdfModal .modal-title {
+        color: #7a4f01;
+        font-weight: bold;
+        font-size: 1.2em;
+      }
+      #pdfModal .modal-body {
+        font-size: 1.08em;
+        color: #444;
+        text-align: center;
+        padding: 1.5em 1em 1.5em 1em;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container py-4">
+      <h1 class="mb-4">Haripur Survey Report</h1>
+
+      <!-- Category Selection UI -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">Select Categories to View</h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-check">
+                <input
+                  class="form-check-input category-checkbox"
+                  type="checkbox"
+                  value="demographics"
+                  id="cat-demographics"
+                  checked
+                />
+                <label class="form-check-label" for="cat-demographics">
+                  Demographics (जनसांख्यिकी)
+                </label>
+              </div>
+              <div class="form-check">
+                <input
+                  class="form-check-input category-checkbox"
+                  type="checkbox"
+                  value="housing"
+                  id="cat-housing"
+                />
+                <label class="form-check-label" for="cat-housing">
+                  Housing (आवास)
+                </label>
+              </div>
+              <div class="form-check">
+                <input
+                  class="form-check-input category-checkbox"
+                  type="checkbox"
+                  value="infrastructure"
+                  id="cat-infrastructure"
+                />
+                <label class="form-check-label" for="cat-infrastructure">
+                  Infrastructure (पूर्वाधार)
+                </label>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-check">
+                <input
+                  class="form-check-input category-checkbox"
+                  type="checkbox"
+                  value="social"
+                  id="cat-social"
+                />
+                <label class="form-check-label" for="cat-social">
+                  Social (सामाजिक)
+                </label>
+              </div>
+              <div class="form-check">
+                <input
+                  class="form-check-input category-checkbox"
+                  type="checkbox"
+                  value="economic"
+                  id="cat-economic"
+                />
+                <label class="form-check-label" for="cat-economic">
+                  Economic (आर्थिक)
+                </label>
+              </div>
+              <div class="form-check">
+                <input
+                  class="form-check-input category-checkbox"
+                  type="checkbox"
+                  value="health"
+                  id="cat-health"
+                />
+                <label class="form-check-label" for="cat-health">
+                  Health (स्वास्थ्य)
+                </label>
+              </div>
+            </div>
+          </div>
+          <div class="mt-3">
+            <button
+              id="select-all-categories"
+              class="btn btn-outline-primary btn-sm me-2"
+            >
+              Select All
+            </button>
+            <button
+              id="clear-all-categories"
+              class="btn btn-outline-secondary btn-sm me-2"
+            >
+              Clear All
+            </button>
+            <button id="update-report" class="btn btn-success btn-sm">
+              Update Report
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <button id="download-pdf" class="btn btn-danger btn-sm me-2">
+          Download PDF
+        </button>
+      </div>
+      <div id="metadata" class="metadata mb-4"></div>
+      <div id="report-content"></div>
+      <div id="pdf-report-content" style="display: none"></div>
+    </div>
+    <script>
+      const API_URL =
+        "https://bhuvanpaudel.com.np/haripur/api/v1/public/reports/"; // Adjust if needed
+
+      function createTable(title, dataObj, rowLabel, colLabel) {
+        if (!dataObj || Object.keys(dataObj).length === 0) return "";
+        let html = `<div class="table-responsive"><h6>${title}</h6><table class="table table-bordered table-sm table-report"><thead><tr>`;
+        html += `<th class="ward-col">${rowLabel || "Category"}</th><th>${
+          colLabel || "Value"
+        }</th></tr></thead><tbody>`;
+        for (const [k, v] of Object.entries(dataObj)) {
+          html += `<tr><td class="ward-col">${k}</td><td>${v}</td></tr>`;
+        }
+        html += "</tbody></table></div>";
+        return html;
+      }
+
+      function renderPopulationTable(wardData) {
+        // Collect rows for each ward
+        let rows = [];
+        let totalHouseholds = 0,
+          totalPop = 0,
+          totalMale = 0,
+          totalFemale = 0;
+        for (const ward of wardData) {
+          const pop = ward.demographics?.population || {};
+          rows.push({
+            ward: ward.ward,
+            households: ward.households || 0,
+            total: pop.total || 0,
+            male: pop.male || 0,
+            female: pop.female || 0,
+            // Add more fields as needed
+          });
+          totalHouseholds += ward.households || 0;
+          totalPop += pop.total || 0;
+          totalMale += pop.male || 0;
+          totalFemale += pop.female || 0;
+        }
+        // Build table
+        let html = `<div class="table-responsive"><h5 class="mb-2 report-title">जनसंख्या वितरणको अवस्था</h5><table class="table table-bordered table-sm align-middle text-center table-report"><thead><tr><th rowspan="2" class="ward-col">वडा नं</th><th rowspan="2">घरपरिवार</th><th colspan="3">जनसंख्या</th></tr><tr><th>जम्मा</th><th>पुरुष</th><th>महिला</th></tr></thead><tbody>`;
+        for (const row of rows) {
+          html += `<tr><td class="ward-col">${row.ward}</td><td>${row.households}</td><td>${row.total}</td><td>${row.male}</td><td>${row.female}</td></tr>`;
+        }
+        // Summary row
+        html += `<tr class="summary-row"><td class="ward-col">जम्मा</td><td>${totalHouseholds}</td><td>${totalPop}</td><td>${totalMale}</td><td>${totalFemale}</td></tr>`;
+        html += "</tbody></table></div>";
+        return html;
+      }
+
+      function renderCategoryTable(wardData, category, fieldMap, title) {
+        // fieldMap: { fieldKey: displayName, ... }
+        let rows = [];
+        let totals = {};
+        for (const key of Object.keys(fieldMap)) totals[key] = 0;
+        for (const ward of wardData) {
+          const cat = ward[category] || {};
+          let row = { ward: ward.ward };
+          for (const [key, label] of Object.entries(fieldMap)) {
+            let val = cat[key];
+            // If value is an object (e.g. distribution), skip for summary table
+            if (typeof val === "object" && val !== null) val = "";
+            row[key] = val || 0;
+            if (!isNaN(row[key])) totals[key] += Number(row[key]);
+          }
+          rows.push(row);
+        }
+        // Build table
+        let html = `<div class="table-responsive"><h5 class="mb-2 report-title">${title}</h5><table class="table table-bordered table-sm align-middle text-center table-report"><thead><tr>`;
+        html += `<th class="ward-col">वडा नं</th>`;
+        for (const label of Object.values(fieldMap))
+          html += `<th>${label}</th>`;
+        html += "</tr></thead><tbody>";
+        for (const row of rows) {
+          html += `<tr><td class="ward-col">${row.ward}</td>`;
+          for (const key of Object.keys(fieldMap))
+            html += `<td>${row[key]}</td>`;
+          html += "</tr>";
+        }
+        // Summary row
+        html += `<tr class="summary-row"><td class="ward-col">जम्मा</td>`;
+        for (const key of Object.keys(fieldMap))
+          html += `<td>${totals[key]}</td>`;
+        html += "</tr></tbody></table></div>";
+        return html;
+      }
+
+      function renderWard(ward) {
+        let html = `<div class="ward-section card card-body shadow-sm mb-4"><h4>Ward ${ward.ward}</h4>`;
+        html += `<div><strong>Households:</strong> ${ward.households}</div>`;
+        // Demographics
+        if (ward.demographics) {
+          html += `<div class="section-title"><strong>Demographics</strong></div>`;
+          if (ward.demographics.population) {
+            html += createTable(
+              "Population",
+              ward.demographics.population,
+              "Type",
+              "Count"
+            );
+          }
+          if (ward.demographics.gender_distribution) {
+            html += createTable(
+              "Gender Distribution",
+              ward.demographics.gender_distribution,
+              "Gender",
+              "Count"
+            );
+          }
+          if (ward.demographics.religion_distribution) {
+            html += createTable(
+              "Religion Distribution",
+              ward.demographics.religion_distribution,
+              "Religion",
+              "Count"
+            );
+          }
+          if (ward.demographics.caste_distribution) {
+            html += createTable(
+              "Caste Distribution",
+              ward.demographics.caste_distribution,
+              "Caste",
+              "Count"
+            );
+          }
+          if (ward.demographics.mother_tongue_distribution) {
+            html += createTable(
+              "Mother Tongue",
+              ward.demographics.mother_tongue_distribution,
+              "Language",
+              "Count"
+            );
+          }
+          if (ward.demographics.education) {
+            html += createTable(
+              "Education",
+              ward.demographics.education,
+              "Level",
+              "Count"
+            );
+          }
+          if (ward.demographics.employment) {
+            html += createTable(
+              "Employment",
+              ward.demographics.employment,
+              "Type",
+              "Count"
+            );
+          }
+        }
+        // Housing
+        if (ward.housing) {
+          html += `<div class="section-title"><strong>Housing</strong></div>`;
+          for (const [k, v] of Object.entries(ward.housing)) {
+            html += createTable(
+              k.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()),
+              v,
+              "Type",
+              "Count"
+            );
+          }
+        }
+        // Infrastructure
+        if (ward.infrastructure) {
+          html += `<div class="section-title"><strong>Infrastructure</strong></div>`;
+          for (const [k, v] of Object.entries(ward.infrastructure)) {
+            if (typeof v === "object" && v !== null) {
+              html += createTable(
+                k.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()),
+                v,
+                "Type",
+                "Count"
+              );
+            }
+          }
+        }
+        // Social
+        if (ward.social) {
+          html += `<div class="section-title"><strong>Social</strong></div>`;
+          for (const [k, v] of Object.entries(ward.social)) {
+            if (typeof v === "object" && v !== null) {
+              html += createTable(
+                k.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()),
+                v,
+                "Type",
+                "Count"
+              );
+            }
+          }
+        }
+        // Economic
+        if (ward.economic) {
+          html += `<div class="section-title"><strong>Economic</strong></div>`;
+          for (const [k, v] of Object.entries(ward.economic)) {
+            if (typeof v === "object" && v !== null) {
+              html += createTable(
+                k.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()),
+                v,
+                "Type",
+                "Count"
+              );
+            }
+          }
+        }
+        // Health
+        if (ward.health) {
+          html += `<div class="section-title"><strong>Health</strong></div>`;
+          for (const [k, v] of Object.entries(ward.health)) {
+            if (typeof v === "object" && v !== null) {
+              html += createTable(
+                k.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()),
+                v,
+                "Type",
+                "Count"
+              );
+            }
+          }
+        }
+        html += "</div>";
+        return html;
+      }
+
+      function renderMetadata(meta) {
+        if (!meta) return "";
+        return `<div><strong>Total Households:</strong> ${
+          meta.total_households
+        } &nbsp; <strong>Total Population:</strong> ${
+          meta.total_population
+        } <br><strong>Wards Included:</strong> ${
+          meta.wards_included && meta.wards_included.join(", ")
+        } <br><strong>Generated At:</strong> ${meta.generated_at}</div>`;
+      }
+
+      function flattenFields(obj, prefix = "") {
+        // Flattens nested objects, e.g. {a: {b: 1}} => {'a.b': 1}
+        let out = {};
+        for (const [k, v] of Object.entries(obj || {})) {
+          if (typeof v === "object" && v !== null && !Array.isArray(v)) {
+            Object.assign(out, flattenFields(v, prefix + k + "."));
+          } else {
+            out[prefix + k] = v;
+          }
+        }
+        return out;
+      }
+
+      function getAllKeys(wardData, category) {
+        // Get all unique keys (flattened) for a category across all wards
+        const keys = new Set();
+        for (const ward of wardData) {
+          if (ward[category]) {
+            const flat = flattenFields(ward[category]);
+            for (const k of Object.keys(flat)) keys.add(k);
+          }
+        }
+        return Array.from(keys);
+      }
+
+      function renderDynamicCategoryTable(wardData, category, title) {
+        const keys = getAllKeys(wardData, category);
+        if (keys.length === 0) return "";
+        let rows = [];
+        let totals = {};
+        for (const k of keys) totals[k] = 0;
+        for (const ward of wardData) {
+          const flat = flattenFields(ward[category] || {});
+          let row = { ward: ward.ward };
+          for (const k of keys) {
+            let val = flat[k] || 0;
+            if (typeof val === "number" && !isNaN(val)) totals[k] += val;
+            row[k] = val;
+          }
+          rows.push(row);
+        }
+        // Build table
+        let html = `<div class="table-responsive"><h5 class="mb-2 report-title">${title}</h5><table class="table table-bordered table-sm align-middle text-center table-report"><thead><tr>`;
+        html += `<th class="ward-col">वडा नं</th>`;
+        for (const k of keys) html += `<th>${k}</th>`;
+        html += "</tr></thead><tbody>";
+        for (const row of rows) {
+          html += `<tr><td class="ward-col">${row.ward}</td>`;
+          for (const k of keys) html += `<td>${row[k]}</td>`;
+          html += "</tr>";
+        }
+        // Summary row
+        html += `<tr class="summary-row"><td class="ward-col">जम्मा</td>`;
+        for (const k of keys) html += `<td>${totals[k]}</td>`;
+        html += "</tr></tbody></table></div>";
+        return html;
+      }
+
+      function getAllDistributions(wardData, category) {
+        // Find all distribution fields (objects of objects) in the category
+        // Only include fields that end with "_distribution" to avoid duplicates
+        const distFields = new Set();
+        for (const ward of wardData) {
+          const cat = ward[category] || {};
+          for (const [k, v] of Object.entries(cat)) {
+            if (
+              v &&
+              typeof v === "object" &&
+              !Array.isArray(v) &&
+              k.endsWith("_distribution")
+            ) {
+              // Only include if all values are numbers or strings (not nested)
+              if (
+                Object.values(v).every(
+                  (x) => typeof x === "number" || typeof x === "string"
+                )
+              ) {
+                distFields.add(k);
+              }
+            }
+          }
+        }
+        return Array.from(distFields);
+      }
+
+      function renderDistributionTable(wardData, category, distField, title) {
+        // Get all possible keys for this distribution
+        const allKeys = new Set();
+        for (const ward of wardData) {
+          const dist = ward[category]?.[distField] || {};
+          for (const k of Object.keys(dist)) allKeys.add(k);
+        }
+        const keys = Array.from(allKeys);
+        let rows = [];
+        let totals = {};
+        for (const k of keys) totals[k] = 0;
+        for (const ward of wardData) {
+          const dist = ward[category]?.[distField] || {};
+          let row = { ward: ward.ward };
+          for (const k of keys) {
+            let val = dist[k] || 0;
+            if (typeof val === "number" && !isNaN(val)) totals[k] += val;
+            row[k] = val;
+          }
+          rows.push(row);
+        }
+        // Build table
+        let html = `<div class="table-responsive"><h6 class="mb-2">${title}</h6><table class="table table-bordered table-sm align-middle text-center table-report"><thead><tr>`;
+        html += `<th class="ward-col">वडा नं</th>`;
+        for (const k of keys) html += `<th>${k}</th>`;
+        html += "</tr></thead><tbody>";
+        for (const row of rows) {
+          html += `<tr><td class="ward-col">${row.ward}</td>`;
+          for (const k of keys) html += `<td>${row[k]}</td>`;
+          html += "</tr>";
+        }
+        // Summary row
+        html += `<tr class="summary-row"><td class="ward-col">जम्मा</td>`;
+        for (const k of keys) html += `<td>${totals[k]}</td>`;
+        html += "</tr></tbody></table></div>";
+        return html;
+      }
+
+      function getDirectNumericFields(wardData, category) {
+        // Get all direct numeric fields (not objects) in the category
+        const keys = new Set();
+        for (const ward of wardData) {
+          const cat = ward[category] || {};
+          for (const [k, v] of Object.entries(cat)) {
+            if (typeof v === "number" && !isNaN(v)) keys.add(k);
+          }
+        }
+        return Array.from(keys);
+      }
+
+      function renderDirectFieldsTable(wardData, category, title) {
+        const keys = getDirectNumericFields(wardData, category);
+        if (keys.length === 0) return "";
+        let rows = [];
+        let totals = {};
+        for (const k of keys) totals[k] = 0;
+        for (const ward of wardData) {
+          const cat = ward[category] || {};
+          let row = { ward: ward.ward };
+          for (const k of keys) {
+            let val = cat[k] || 0;
+            if (typeof val === "number" && !isNaN(val)) totals[k] += val;
+            row[k] = val;
+          }
+          rows.push(row);
+        }
+        // Build table
+        let html = `<div class="table-responsive"><h5 class="mb-2 report-title">${title}</h5><table class="table table-bordered table-sm align-middle text-center table-report"><thead><tr>`;
+        html += `<th class="ward-col">वडा नं</th>`;
+        for (const k of keys) html += `<th>${k}</th>`;
+        html += "</tr></thead><tbody>";
+        for (const row of rows) {
+          html += `<tr><td class="ward-col">${row.ward}</td>`;
+          for (const k of keys) html += `<td>${row[k]}</td>`;
+          html += "</tr>";
+        }
+        // Summary row
+        html += `<tr class="summary-row"><td class="ward-col">जम्मा</td>`;
+        for (const k of keys) html += `<td>${totals[k]}</td>`;
+        html += "</tr></tbody></table></div>";
+        return html;
+      }
+
+      function getSubObjects(wardData, category) {
+        // Get all sub-objects (excluding distributions) in the category
+        // Exclude fields that end with "_distribution" to avoid duplicates
+        const subObjs = new Set();
+        for (const ward of wardData) {
+          const cat = ward[category] || {};
+          for (const [k, v] of Object.entries(cat)) {
+            if (
+              v &&
+              typeof v === "object" &&
+              !Array.isArray(v) &&
+              !k.endsWith("_distribution")
+            ) {
+              // If all values are numbers, treat as sub-object (not distribution)
+              if (
+                Object.values(v).every(
+                  (x) => typeof x === "number" && !isNaN(x)
+                )
+              ) {
+                subObjs.add(k);
+              }
+            }
+          }
+        }
+        return Array.from(subObjs);
+      }
+
+      function renderSubObjectTable(wardData, category, subObj, title) {
+        // Get all keys for this sub-object
+        const allKeys = new Set();
+        for (const ward of wardData) {
+          const sub = ward[category]?.[subObj] || {};
+          for (const k of Object.keys(sub)) allKeys.add(k);
+        }
+        const keys = Array.from(allKeys);
+        let rows = [];
+        let totals = {};
+        for (const k of keys) totals[k] = 0;
+        for (const ward of wardData) {
+          const sub = ward[category]?.[subObj] || {};
+          let row = { ward: ward.ward };
+          for (const k of keys) {
+            let val = sub[k] || 0;
+            if (typeof val === "number" && !isNaN(val)) totals[k] += val;
+            row[k] = val;
+          }
+          rows.push(row);
+        }
+        // Build table
+        let html = `<div class="table-responsive"><h6 class="mb-2">${title}</h6><table class="table table-bordered table-sm align-middle text-center table-report"><thead><tr>`;
+        html += `<th class="ward-col">वडा नं</th>`;
+        for (const k of keys) html += `<th>${k}</th>`;
+        html += "</tr></thead><tbody>";
+        for (const row of rows) {
+          html += `<tr><td class="ward-col">${row.ward}</td>`;
+          for (const k of keys) html += `<td>${row[k]}</td>`;
+          html += "</tr>";
+        }
+        // Summary row
+        html += `<tr class="summary-row"><td class="ward-col">जम्मा</td>`;
+        for (const k of keys) html += `<td>${totals[k]}</td>`;
+        html += "</tr></tbody></table></div>";
+        return html;
+      }
+
+      function addTableDownloadButtons() {
+        // Add PNG/JPG and Excel download buttons to each table-report
+        document.querySelectorAll(".table-report").forEach((table, idx) => {
+          // Avoid adding buttons multiple times
+          if (table.parentElement.querySelector(".table-download-btns")) return;
+          const btnDiv = document.createElement("div");
+          btnDiv.className = "table-download-btns mb-2";
+          btnDiv.innerHTML = `
+            <button class="btn btn-outline-success btn-sm me-1" data-table-idx="${idx}" data-format="png">Download as PNG</button>
+            <button class="btn btn-outline-primary btn-sm" data-table-idx="${idx}" data-format="excel">Download as Excel</button>
+        `;
+          table.parentElement.insertBefore(btnDiv, table);
+          btnDiv.querySelectorAll("button").forEach((btn) => {
+            btn.addEventListener("click", function () {
+              const format = btn.getAttribute("data-format");
+              if (format === "png") {
+                html2canvas(table).then((canvas) => {
+                  const link = document.createElement("a");
+                  link.download = `table_${idx + 1}.png`;
+                  link.href = canvas.toDataURL("image/png");
+                  link.click();
+                });
+              } else if (format === "excel") {
+                // Convert table to worksheet
+                const wb = XLSX.utils.book_new();
+                const ws = XLSX.utils.table_to_sheet(table);
+
+                // Apply styles: header row, summary row, borders
+                const range = XLSX.utils.decode_range(ws["!ref"]);
+                // Header row (first row)
+                for (let C = range.s.c; C <= range.e.c; ++C) {
+                  const cell = ws[XLSX.utils.encode_cell({ r: 0, c: C })];
+                  if (cell) {
+                    cell.s = {
+                      fill: { fgColor: { rgb: "F8D7B7" } },
+                      font: { bold: true, color: { rgb: "222222" } },
+                      border: {
+                        top: { style: "thin", color: { rgb: "BFA16B" } },
+                        bottom: { style: "thin", color: { rgb: "BFA16B" } },
+                        left: { style: "thin", color: { rgb: "BFA16B" } },
+                        right: { style: "thin", color: { rgb: "BFA16B" } },
+                      },
+                      alignment: { horizontal: "center", vertical: "center" },
+                    };
+                  }
+                }
+                // Summary row (last row)
+                for (let C = range.s.c; C <= range.e.c; ++C) {
+                  const cell =
+                    ws[XLSX.utils.encode_cell({ r: range.e.r, c: C })];
+                  if (cell) {
+                    cell.s = {
+                      fill: { fgColor: { rgb: "E2E3E5" } },
+                      font: { bold: true },
+                      border: {
+                        top: { style: "thin", color: { rgb: "BFA16B" } },
+                        bottom: { style: "thin", color: { rgb: "BFA16B" } },
+                        left: { style: "thin", color: { rgb: "BFA16B" } },
+                        right: { style: "thin", color: { rgb: "BFA16B" } },
+                      },
+                      alignment: { horizontal: "center", vertical: "center" },
+                    };
+                  }
+                }
+                // All cells: borders
+                for (let R = range.s.r; R <= range.e.r; ++R) {
+                  for (let C = range.s.c; C <= range.e.c; ++C) {
+                    const cell = ws[XLSX.utils.encode_cell({ r: R, c: C })];
+                    if (cell) {
+                      cell.s = cell.s || {};
+                      cell.s.border = {
+                        top: { style: "thin", color: { rgb: "BFA16B" } },
+                        bottom: { style: "thin", color: { rgb: "BFA16B" } },
+                        left: { style: "thin", color: { rgb: "BFA16B" } },
+                        right: { style: "thin", color: { rgb: "BFA16B" } },
+                      };
+                      cell.s.alignment = {
+                        horizontal: "center",
+                        vertical: "center",
+                      };
+                    }
+                  }
+                }
+                ws["!cols"] = Array(range.e.c - range.s.c + 1).fill({
+                  wpx: 110,
+                });
+                XLSX.utils.book_append_sheet(wb, ws, `Table${idx + 1}`);
+                XLSX.writeFile(wb, `table_${idx + 1}.xlsx`);
+              }
+            });
+          });
+        });
+      }
+
+      async function fetchAndRender() {
+        const content = document.getElementById("report-content");
+        const metaDiv = document.getElementById("metadata");
+        content.innerHTML =
+          '<div class="text-center my-5"><div class="spinner-border" role="status"></div><br>Loading report...</div>';
+        try {
+          const resp = await fetch(API_URL);
+          if (!resp.ok) throw new Error("Failed to fetch report data");
+          const data = await resp.json();
+          metaDiv.innerHTML = renderMetadata(data.metadata);
+
+          // Store data globally for category filtering
+          window.reportData = data;
+
+          renderSelectedCategories();
+        } catch (e) {
+          content.innerHTML = `<div class='alert alert-danger'>${e.message}</div>`;
+        }
+      }
+
+      function getSelectedCategories() {
+        const checkboxes = document.querySelectorAll(
+          ".category-checkbox:checked"
+        );
+        return Array.from(checkboxes).map((cb) => cb.value);
+      }
+
+      function renderSelectedCategories() {
+        const content = document.getElementById("report-content");
+        const data = window.reportData;
+
+        if (!data) {
+          content.innerHTML =
+            '<div class="alert alert-warning">No data available.</div>';
+          return;
+        }
+
+        let html = "";
+        if (data.ward_wise_data && data.ward_wise_data.length > 0) {
+          const selectedCategories = getSelectedCategories();
+
+          if (selectedCategories.length === 0) {
+            html =
+              '<div class="alert alert-info">Please select at least one category to view tables.</div>';
+          } else {
+            for (const cat of selectedCategories) {
+              // Main table for direct numeric fields
+              html += renderDirectFieldsTable(
+                data.ward_wise_data,
+                cat,
+                cat.charAt(0).toUpperCase() + cat.slice(1)
+              );
+              // Sub-object tables (e.g. education, employment)
+              for (const sub of getSubObjects(data.ward_wise_data, cat)) {
+                html += renderSubObjectTable(
+                  data.ward_wise_data,
+                  cat,
+                  sub,
+                  `${cat.charAt(0).toUpperCase() + cat.slice(1)} - ${sub}`
+                );
+              }
+              // Distribution tables (e.g. gender_distribution)
+              for (const dist of getAllDistributions(
+                data.ward_wise_data,
+                cat
+              )) {
+                html += renderDistributionTable(
+                  data.ward_wise_data,
+                  cat,
+                  dist,
+                  `${cat.charAt(0).toUpperCase() + cat.slice(1)} - ${dist}`
+                );
+              }
+            }
+          }
+        } else {
+          html =
+            '<div class="alert alert-warning">No ward data available.</div>';
+        }
+        content.innerHTML = html;
+        addTableDownloadButtons();
+      }
+
+      // PDF download for whole report
+      window.addEventListener("DOMContentLoaded", () => {
+        fetchAndRender();
+
+        // Category selection event listeners
+        document
+          .getElementById("select-all-categories")
+          .addEventListener("click", function () {
+            document
+              .querySelectorAll(".category-checkbox")
+              .forEach((cb) => (cb.checked = true));
+          });
+
+        document
+          .getElementById("clear-all-categories")
+          .addEventListener("click", function () {
+            document
+              .querySelectorAll(".category-checkbox")
+              .forEach((cb) => (cb.checked = false));
+          });
+
+        document
+          .getElementById("update-report")
+          .addEventListener("click", function () {
+            renderSelectedCategories();
+          });
+
+        // Auto-update when checkboxes change
+        document.querySelectorAll(".category-checkbox").forEach((checkbox) => {
+          checkbox.addEventListener("change", function () {
+            renderSelectedCategories();
+          });
+        });
+
+        document
+          .getElementById("download-pdf")
+          .addEventListener("click", async function () {
+            // Show modal (ensure Bootstrap 5 modal is available)
+            let modal;
+            const modalDiv = document.getElementById("pdfModal");
+            // Disable close button while generating
+            const closeBtn = modalDiv.querySelector(".btn-close");
+            if (closeBtn) closeBtn.style.display = "none";
+            if (window.bootstrap && bootstrap.Modal) {
+              modal = new bootstrap.Modal(modalDiv);
+              modal.show();
+            } else {
+              modalDiv.style.display = "block";
+            } // Use setTimeout to ensure modal is rendered before heavy PDF work
+            setTimeout(async () => {
+              // Use stored data for PDF (or fetch if not available)
+              let data = window.reportData;
+              if (!data) {
+                try {
+                  const resp = await fetch(API_URL);
+                  data = await resp.json();
+                } catch {
+                  if (modal) modal.hide();
+                  else modalDiv.style.display = "none";
+                  if (closeBtn) closeBtn.style.display = "";
+                  alert("Failed to fetch data for PDF export.");
+                  return;
+                }
+              }
+
+              // Check if any categories are selected
+              const selectedCategories = getSelectedCategories();
+              if (selectedCategories.length === 0) {
+                if (modal) modal.hide();
+                else modalDiv.style.display = "none";
+                if (closeBtn) closeBtn.style.display = "";
+                alert("Please select at least one category to generate PDF.");
+                return;
+              }
+
+              // Render simple report in hidden div
+              const pdfDiv = document.getElementById("pdf-report-content");
+              pdfDiv.innerHTML = "";
+              // Add metadata
+              if (data.metadata) {
+                pdfDiv.innerHTML += `<div style='margin-bottom:10px;font-size:1.1em;'><b>Total Households:</b> ${
+                  data.metadata.total_households
+                } &nbsp; <b>Total Population:</b> ${
+                  data.metadata.total_population
+                } <br><b>Wards Included:</b> ${
+                  data.metadata.wards_included &&
+                  data.metadata.wards_included.join(", ")
+                } <br><b>Generated At:</b> ${data.metadata.generated_at}</div>`;
+              }
+              pdfDiv.innerHTML += renderSimpleReport(data);
+              pdfDiv.style.display = "block";
+              const opt = {
+                margin: 0.3,
+                filename: "Haripur_Survey_Report.pdf",
+                image: { type: "jpeg", quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: "in", format: "a4", orientation: "portrait" },
+                pagebreak: { mode: ["avoid-all", "css", "legacy"] },
+              };
+              await html2pdf().set(opt).from(pdfDiv).save();
+              pdfDiv.style.display = "none";
+              if (modal) modal.hide();
+              else modalDiv.style.display = "none";
+              if (closeBtn) closeBtn.style.display = "";
+            }, 100); // 100ms to allow modal to render
+          });
+      });
+
+      function renderSimpleTable(title, headers, rows, summaryRow) {
+        // No sticky, no Bootstrap, no download buttons, minimal styling
+        // Wrap title and table in a div to keep them together in PDF
+        let html = `<div style='margin-bottom:24px; page-break-inside: avoid; break-inside: avoid;'>`;
+        html += `<div style='font-weight:bold;font-size:1.1em;margin-bottom:6px;text-align:left; page-break-after: avoid; break-after: avoid; padding-left:2px;'>${title}</div>`;
+        html += `<table border='1' cellspacing='0' cellpadding='4' style='width:100%;border-collapse:collapse;font-size:1em; page-break-inside: avoid; break-inside: avoid;'>`;
+        html += "<thead><tr>";
+        for (const h of headers)
+          html += `<th style='background:#f8d7b7;color:#222;font-weight:bold;border:1px solid #bfa16b;text-align:center;'>${h}</th>`;
+        html += "</tr></thead><tbody>";
+        for (const row of rows) {
+          html += "<tr>";
+          for (const cell of row)
+            html += `<td style='text-align:center;border:1px solid #bfa16b;'>${cell}</td>`;
+          html += "</tr>";
+        }
+        if (summaryRow) {
+          html += "<tr>";
+          for (const cell of summaryRow)
+            html += `<td style='background:#e2e3e5;font-weight:bold;text-align:center;border:1px solid #bfa16b;'>${cell}</td>`;
+          html += "</tr>";
+        }
+        html += "</tbody></table></div>";
+        return html;
+      }
+
+      function renderSimpleReport(data) {
+        let html = "";
+        if (!data.ward_wise_data || data.ward_wise_data.length === 0)
+          return "<div>No data available.</div>";
+
+        const selectedCategories = getSelectedCategories();
+        if (selectedCategories.length === 0) {
+          return "<div>Please select at least one category to generate PDF.</div>";
+        }
+
+        for (const cat of selectedCategories) {
+          // Direct numeric fields
+          const keys = getDirectNumericFields(data.ward_wise_data, cat);
+          if (keys.length > 0) {
+            const headers = ["वडा नं", ...keys];
+            const rows = data.ward_wise_data.map((w) => [
+              w.ward,
+              ...keys.map((k) => w[cat]?.[k] || 0),
+            ]);
+            const summary = [
+              "जम्मा",
+              ...keys.map((k) =>
+                data.ward_wise_data.reduce((a, w) => a + (w[cat]?.[k] || 0), 0)
+              ),
+            ];
+            html += renderSimpleTable(
+              cat.charAt(0).toUpperCase() + cat.slice(1),
+              headers,
+              rows,
+              summary
+            );
+          }
+          // Sub-objects
+          for (const sub of getSubObjects(data.ward_wise_data, cat)) {
+            const allKeys = new Set();
+            data.ward_wise_data.forEach((w) => {
+              const subObj = w[cat]?.[sub] || {};
+              Object.keys(subObj).forEach((k) => allKeys.add(k));
+            });
+            const subKeys = Array.from(allKeys);
+            if (subKeys.length > 0) {
+              const headers = ["वडा नं", ...subKeys];
+              const rows = data.ward_wise_data.map((w) => [
+                w.ward,
+                ...subKeys.map((k) => w[cat]?.[sub]?.[k] || 0),
+              ]);
+              const summary = [
+                "जम्मा",
+                ...subKeys.map((k) =>
+                  data.ward_wise_data.reduce(
+                    (a, w) => a + (w[cat]?.[sub]?.[k] || 0),
+                    0
+                  )
+                ),
+              ];
+              html += renderSimpleTable(
+                cat.charAt(0).toUpperCase() + cat.slice(1) + " - " + sub,
+                headers,
+                rows,
+                summary
+              );
+            }
+          }
+          // Distributions
+          for (const dist of getAllDistributions(data.ward_wise_data, cat)) {
+            const allKeys = new Set();
+            data.ward_wise_data.forEach((w) => {
+              const distObj = w[cat]?.[dist] || {};
+              Object.keys(distObj).forEach((k) => allKeys.add(k));
+            });
+            const distKeys = Array.from(allKeys);
+            if (distKeys.length > 0) {
+              const headers = ["वडा नं", ...distKeys];
+              const rows = data.ward_wise_data.map((w) => [
+                w.ward,
+                ...distKeys.map((k) => w[cat]?.[dist]?.[k] || 0),
+              ]);
+              const summary = [
+                "जम्मा",
+                ...distKeys.map((k) =>
+                  data.ward_wise_data.reduce(
+                    (a, w) => a + (w[cat]?.[dist]?.[k] || 0),
+                    0
+                  )
+                ),
+              ];
+              html += renderSimpleTable(
+                cat.charAt(0).toUpperCase() + cat.slice(1) + " - " + dist,
+                headers,
+                rows,
+                summary
+              );
+            }
+          }
+        }
+        return html;
+      }
+    </script>
+    <script>
+      /* ---- helper funcs ---------------------------------------------------- */
+      function getCookie(name) {
+        const m = document.cookie.match(
+          new RegExp("(?:^|;\\s*)" + name + "=([^;]*)")
+        );
+        return m ? decodeURIComponent(m[1]) : null;
+      }
+      function parseJwt(jwt) {
+        try {
+          const base64 = jwt.split(".")[1];
+          return JSON.parse(atob(base64));
+        } catch (_) {
+          return null;
+        }
+      }
+
+      /* ---- gatekeeper ------------------------------------------------------ */
+      (async () => {
+        const token = getCookie("auth_token");
+        if (!token) {
+          window.location.href =
+            "/login?next=" + encodeURIComponent(location.pathname);
+          return;
+        }
+
+        const payload = decodeJWT(token);
+        const userId = payload?.user_id;
+        console.log("this is user id", userId);
+        if (!userId) {
+          window.location.href = "/login";
+          return;
+        }
+        try {
+          const res = await fetch(
+            `https://bhuvanpaudel.com.np/haripur/api/v1/user/users/${userId}/`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
+          if (!res.ok) throw new Error("bad status");
+          const user = await res.json();
+
+          if (user.is_superuser) {
+            /* 🎉  authorised — show page */
+            document.body.style.visibility = "visible";
+          } else {
+            window.location.href = "/403"; // or '/' or any page you like
+          }
+        } catch (err) {
+          console.error("Auth check failed:", err);
+          window.location.href = "/login";
+        }
+      })();
+    </script>
+
+    <!-- Modal HTML (hidden by default) -->
+    <div
+      class="modal fade"
+      id="pdfModal"
+      tabindex="-1"
+      aria-labelledby="pdfModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="pdfModalLabel">
+              Generating PDF Report
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            Please wait while the PDF report is being generated.
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

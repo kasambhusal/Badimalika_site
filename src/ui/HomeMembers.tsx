@@ -27,7 +27,7 @@ const defaultMembers: Member[] = [
     phone: "9844059638",
     email: "gopalpajiyaresa@gmail.com",
     imageUrl: "/assets/images/Members/gopalpariyar.jpg",
-    headerColor: "#7C93F0", // Light blue
+    headerColor: "#002c58", // Light blue
   },
   {
     id: "2",
@@ -37,7 +37,7 @@ const defaultMembers: Member[] = [
     identity: "जन प्रतिनिधि",
     email: "dmayor.haripurmun@gmail.com",
     imageUrl: "/assets/images/Members/nelamyadav.jpeg",
-    headerColor: "#8B7CF0", // Purple
+    headerColor: "#002c58", // Purple
   },
   {
     id: "3",
@@ -47,7 +47,7 @@ const defaultMembers: Member[] = [
     identity: "पदाधिकारी",
     email: "mail8haripurmun@gmail.com",
     imageUrl: "/assets/images/Members/vinay-poudel.jpg",
-    headerColor: "#4FFFB0", // Green
+    headerColor: "#002c58", // Green
   },
 ];
 

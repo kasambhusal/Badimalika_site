@@ -20,6 +20,15 @@
   color: #fff;
 }
 
+/* styles/globals.css (or wherever you keep global styles) */
+.recharts-text {
+  font-weight: 800; /* 700 if you want true bold */
+}
+
+.recharts-default-legend text {
+  font-weight: 800;
+}
+
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);

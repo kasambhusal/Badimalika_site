@@ -42,7 +42,6 @@ export function usePlans({ limit, offset, searchTerm }: UsePlansParams): UsePlan
           limit: limit.toString(),
           offset: offset.toString(),
         })
-
         response = (await Get({
           url: `/plans/?${params.toString()}`,
           headers: getApiHeadersWithAuth(),

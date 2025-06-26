@@ -61,7 +61,6 @@ export default function PlansPage() {
     offset,
     searchTerm: debouncedSearchTerm,
   });
-
   useEffect(() => {
     setCurrentPage(1);
   }, [debouncedSearchTerm]);
@@ -101,14 +100,6 @@ export default function PlansPage() {
 
     return pages;
   }, [currentPage, totalPages]);
-
-  if (loading && plans.length === 0) {
-    return (
-      <div className="min-h-screen bg-gray-50 py-4 sm:py-8 px-4">
-        <p>Loading...</p>
-      </div>
-    );
-  }
 
   if (error) {
     return (
