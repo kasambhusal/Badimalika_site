@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { Card, Button } from "antd";
-import { FileTextOutlined } from "@ant-design/icons";
+import { File } from "lucide-react";
 
 export default function Page() {
   return (
@@ -13,7 +13,7 @@ export default function Page() {
         className="w-full max-w-md rounded-md shadow-lg"
         title={
           <div className="flex items-center gap-2 text-lg font-semibold">
-            <FileTextOutlined />
+            <File />
             हरिपुर नगरपालिका – वार्षिक प्रतिवेदन
           </div>
         }
@@ -25,12 +25,7 @@ export default function Page() {
         {/* Action buttons */}
         <div className="flex flex-col gap-3 sm:flex-row">
           <Link href="/report/a7Gk3Pq2/report.html" target="_blank">
-            <Button
-              type="primary"
-              icon={<FileTextOutlined />}
-              size="large"
-              block
-            >
+            <Button type="primary" icon={<File />} size="large" block>
               रिपोर्ट हेर्नुहोस्
             </Button>
           </Link>
