@@ -9,22 +9,25 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle, AlertCircle, Shield, RefreshCw } from "lucide-react";
+import { Post } from "@/lib/api";
+import { useNotifications } from "@/app/providers/notification-provider";
 
 interface FeedbackData {
   name: string;
-  phone: string;
+  phone_number: string;
   subject: string;
   address: string;
   message: string;
 }
 
 interface FormErrors {
-  name?: string;
-  phone?: string;
-  subject?: string;
-  address?: string;
-  message?: string;
-  captcha?: string;
+  name?: string[];
+  phone_number?: string[];
+  subject?: string[];
+  address?: string[];
+  message?: string[];
+  captcha?: string[];
+  non_field_errors?: string[];
 }
 
 interface MathCaptcha {
@@ -36,12 +39,12 @@ interface MathCaptcha {
 export default function FeedbackForm() {
   const [formData, setFormData] = useState<FeedbackData>({
     name: "",
-    phone: "",
+    phone_number: "",
     subject: "",
     address: "",
     message: "",
   });
-
+  const { showSuccess, showError } = useNotifications();
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<"success" | "error" | null>(
@@ -98,51 +101,52 @@ export default function FeedbackForm() {
 
     // Name validation
     if (!formData.name.trim()) {
-      newErrors.name = "Name is required";
+      newErrors.name = ["Name is required"];
     } else if (formData.name.trim().length < 2) {
-      newErrors.name = "Name must be at least 2 characters";
+      newErrors.name = ["Name must be at least 2 characters"];
     }
 
     // Phone validation
-    if (!formData.phone.trim()) {
-      newErrors.phone = "Phone number is required";
-    } else if (!/^\d{10}$/.test(formData.phone.replace(/\D/g, ""))) {
-      newErrors.phone = "Please enter a valid 10-digit phone number";
+    if (!formData.phone_number.trim()) {
+      newErrors.phone_number = ["Phone number is required"];
+    } else if (!/^\d{10}$/.test(formData.phone_number.replace(/\D/g, ""))) {
+      newErrors.phone_number = ["Please enter a valid 10-digit phone number"];
     }
 
     // Subject validation
     if (!formData.subject.trim()) {
-      newErrors.subject = "Subject is required";
+      newErrors.subject = ["Subject is required"];
     } else if (formData.subject.trim().length < 3) {
-      newErrors.subject = "Subject must be at least 3 characters";
+      newErrors.subject = ["Subject must be at least 3 characters"];
     }
 
     // Address validation
     if (!formData.address.trim()) {
-      newErrors.address = "Address is required";
+      newErrors.address = ["Address is required"];
     } else if (formData.address.trim().length < 5) {
-      newErrors.address = "Address must be at least 5 characters";
+      newErrors.address = ["Address must be at least 5 characters"];
     }
 
     // Message validation
     if (!formData.message.trim()) {
-      newErrors.message = "Message is required";
+      newErrors.message = ["Message is required"];
     } else if (formData.message.trim().length < 10) {
-      newErrors.message = "Message must be at least 10 characters";
+      newErrors.message = ["Message must be at least 10 characters"];
     } else if (formData.message.trim().length > 500) {
-      newErrors.message = "Message must be less than 500 characters";
+      newErrors.message = ["Message must be less than 500 characters"];
     }
 
     // Math CAPTCHA validation
     if (!captchaInput.trim()) {
-      newErrors.captcha =
-        "Please solve the math problem to verify you're human";
+      newErrors.captcha = [
+        "Please solve the math problem to verify you're human",
+      ];
     } else {
       const userAnswer = Number.parseInt(captchaInput.trim());
       if (isNaN(userAnswer)) {
-        newErrors.captcha = "Please enter a valid number";
+        newErrors.captcha = ["Please enter a valid number"];
       } else if (userAnswer !== mathCaptcha.answer) {
-        newErrors.captcha = "Incorrect answer. Please try again.";
+        newErrors.captcha = ["Incorrect answer. Please try again."];
       }
     }
 
@@ -180,7 +184,7 @@ export default function FeedbackForm() {
   const resetForm = () => {
     setFormData({
       name: "",
-      phone: "",
+      phone_number: "",
       subject: "",
       address: "",
       message: "",
@@ -202,29 +206,19 @@ export default function FeedbackForm() {
     setSubmitStatus(null);
 
     try {
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Log feedback data to console
-      console.log("=== FEEDBACK SUBMISSION ===");
-      console.log("Timestamp:", new Date().toISOString());
-      console.log("Math CAPTCHA:", {
-        question: mathCaptcha.question,
-        correctAnswer: mathCaptcha.answer,
-        userAnswer: Number.parseInt(captchaInput),
-        verified: Number.parseInt(captchaInput) === mathCaptcha.answer,
-      });
-      console.log("Feedback Data:", {
+      const submitData = {
         name: formData.name.trim(),
-        phone: formData.phone.trim(),
+        phone_number: formData.phone_number.trim(),
         subject: formData.subject.trim(),
         address: formData.address.trim(),
         message: formData.message.trim(),
-        characterCount: formData.message.trim().length,
-        humanVerified: true,
-      });
-      console.log("=== END FEEDBACK ===");
+      };
 
+      const response = await Post({
+        url: "/public/feedback/submit/",
+        data: submitData,
+      });
+      showSuccess("Feedback Send!", (response as { message: string }).message);
       // Reset form on successful submission
       resetForm();
       setSubmitStatus("success");
@@ -233,8 +227,22 @@ export default function FeedbackForm() {
       setTimeout(() => {
         setSubmitStatus(null);
       }, 5000);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error submitting feedback:", error);
+      showError("Feedback Error!", "Something went wrong, please try later!");
+
+      // Handle API validation errors
+      if (error && typeof error === "object" && "response" in error) {
+        const apiError = error as { response: { data: FormErrors } };
+        if (apiError.response?.data) {
+          setErrors(apiError.response.data);
+        }
+      } else {
+        setErrors({
+          non_field_errors: ["Failed to submit feedback. Please try again."],
+        });
+      }
+
       setSubmitStatus("error");
     } finally {
       setIsSubmitting(false);
@@ -275,6 +283,15 @@ export default function FeedbackForm() {
               </Alert>
             )}
 
+            {errors.non_field_errors && (
+              <Alert className="mb-6 border-red-200 bg-red-50">
+                <AlertCircle className="h-4 w-4 text-red-600" />
+                <AlertDescription className="text-red-800">
+                  {errors.non_field_errors[0]}
+                </AlertDescription>
+              </Alert>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-3">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-1">
@@ -292,26 +309,32 @@ export default function FeedbackForm() {
                     }
                   />
                   {errors.name && (
-                    <p className="text-sm text-red-600">{errors.name}</p>
+                    <p className="text-sm text-red-600">{errors.name[0]}</p>
                   )}
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="phone" className="text-sm font-medium">
+                  <Label htmlFor="phone_number" className="text-sm font-medium">
                     Phone Number *
                   </Label>
                   <Input
-                    id="phone"
+                    id="phone_number"
                     type="tel"
                     placeholder="Enter your phone number"
-                    value={formData.phone}
-                    onChange={(e) => handleInputChange("phone", e.target.value)}
+                    value={formData.phone_number}
+                    onChange={(e) =>
+                      handleInputChange("phone_number", e.target.value)
+                    }
                     className={
-                      errors.phone ? "border-red-500 focus:border-red-500" : ""
+                      errors.phone_number
+                        ? "border-red-500 focus:border-red-500"
+                        : ""
                     }
                   />
-                  {errors.phone && (
-                    <p className="text-sm text-red-600">{errors.phone}</p>
+                  {errors.phone_number && (
+                    <p className="text-sm text-red-600">
+                      {errors.phone_number[0]}
+                    </p>
                   )}
                 </div>
               </div>
@@ -331,7 +354,7 @@ export default function FeedbackForm() {
                   }
                 />
                 {errors.subject && (
-                  <p className="text-sm text-red-600">{errors.subject}</p>
+                  <p className="text-sm text-red-600">{errors.subject[0]}</p>
                 )}
               </div>
 
@@ -350,7 +373,7 @@ export default function FeedbackForm() {
                   }
                 />
                 {errors.address && (
-                  <p className="text-sm text-red-600">{errors.address}</p>
+                  <p className="text-sm text-red-600">{errors.address[0]}</p>
                 )}
               </div>
 
@@ -369,7 +392,7 @@ export default function FeedbackForm() {
                 />
                 <div className="flex justify-between items-center">
                   {errors.message && (
-                    <p className="text-sm text-red-600">{errors.message}</p>
+                    <p className="text-sm text-red-600">{errors.message[0]}</p>
                   )}
                   <p className="text-sm text-gray-500 ml-auto">
                     {formData.message.length}/500 characters
@@ -423,7 +446,7 @@ export default function FeedbackForm() {
                   </div>
                   {errors.captcha && (
                     <p className="text-sm text-red-600 text-center mt-2">
-                      {errors.captcha}
+                      {errors.captcha[0]}
                     </p>
                   )}
                 </div>

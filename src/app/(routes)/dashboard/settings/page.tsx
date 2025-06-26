@@ -27,7 +27,6 @@ interface UserProfileResponse {
   last_login: string | null;
   is_superuser: boolean;
   email: string;
-  user_name: string;
   first_name: string;
   last_name: string;
   start_date: string;
@@ -41,7 +40,6 @@ interface UserProfileResponse {
 }
 
 interface ProfileData {
-  user_name: string;
   first_name: string;
   last_name: string;
   email: string;
@@ -52,7 +50,6 @@ interface ProfileData {
 }
 
 interface FormErrors {
-  user_name?: string;
   first_name?: string;
   last_name?: string;
   email?: string;
@@ -83,7 +80,6 @@ const genderOptions = [
 export default function SettingsPage() {
   const { user } = useLogin();
   const [formData, setFormData] = useState<ProfileData>({
-    user_name: "",
     first_name: "",
     last_name: "",
     email: "",
@@ -122,14 +118,13 @@ export default function SettingsPage() {
 
         // Get user profile using the extracted ID
         const response: UserProfileResponse = (await Get({
-          url: `/users/${userIdFromToken}/`,
+          url: `/user/users/${userIdFromToken}/`,
         })) as UserProfileResponse;
 
         console.log("User profile response:", response);
 
         if (response) {
           setFormData({
-            user_name: response.user_name || "",
             first_name: response.first_name || "",
             last_name: response.last_name || "",
             email: response.email || "",
@@ -141,12 +136,6 @@ export default function SettingsPage() {
         }
       } catch (error: unknown) {
         console.error("Failed to load user profile:", error);
-
-        // Auto-fill with available data from login context
-        setFormData((prev) => ({
-          ...prev,
-          user_name: user?.userName || "",
-        }));
 
         // Try to extract user ID even if profile fetch fails
         if (user?.token) {
@@ -192,11 +181,6 @@ export default function SettingsPage() {
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
-
-    // User name validation (required, minLength: 1)
-    if (!formData.user_name.trim()) {
-      newErrors.user_name = "Username is required";
-    }
 
     // Email validation (required, email format)
     if (!formData.email.trim()) {
@@ -281,7 +265,6 @@ export default function SettingsPage() {
 
     try {
       const updateData = {
-        user_name: formData.user_name.trim(),
         first_name: formData.first_name.trim(),
         last_name: formData.last_name.trim(),
         email: formData.email.trim(),
@@ -301,17 +284,15 @@ export default function SettingsPage() {
         }
       });
 
-
       // Use Patch with proper authentication headers
       await Patch({
-        url: `/update_profile/${userId}/`,
+        url: `/user/update_profile/`,
         data: updateData,
         config: {
           headers: getApiHeadersWithAuth(), // This includes the Authorization header
         },
       });
 
-      console.log("Profile updated successfully");
       setSubmitStatus("success");
 
       // Clear success message after 5 seconds
@@ -389,7 +370,6 @@ export default function SettingsPage() {
             Update your personal information and account details.
           </p>
           {userId && <p className="text-xs text-gray-500">User ID: {userId}</p>}
-        
         </CardHeader>
 
         <CardContent className="p-6">
@@ -427,25 +407,6 @@ export default function SettingsPage() {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Username and Email */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="user_name" className="text-sm font-medium">
-                  Username *
-                </Label>
-                <Input
-                  id="user_name"
-                  type="text"
-                  placeholder="Enter your username"
-                  value={formData.user_name}
-                  onChange={(e) =>
-                    handleInputChange("user_name", e.target.value)
-                  }
-                  className={errors.user_name ? "border-red-500" : ""}
-                />
-                {errors.user_name && (
-                  <p className="text-sm text-red-600">{errors.user_name}</p>
-                )}
-              </div>
-
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-sm font-medium">
                   Email *

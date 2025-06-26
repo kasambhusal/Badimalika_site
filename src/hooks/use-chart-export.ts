@@ -274,7 +274,7 @@ export function useChartExport() {
         <!DOCTYPE html>
         <html>
           <head>
-            <title>Local Government Chart Report</title>
+            <title>Haripur Municipality Chart Report</title>
             <style>
               body { 
                 margin: 0; 
@@ -293,8 +293,9 @@ export function useChartExport() {
           </head>
           <body>
             <div style="text-align: center; margin-bottom: 20px;">
-              <h2>Local Government Chart Report</h2>
-              <p>Generated on: ${new Date().toLocaleDateString()}</p>
+              <h2>Haripur Municipality Chart Report</h2>
+              <p>Generated on: ${new Date().toLocaleDateString("ne-NP")}</p>
+              <p>Local Government of Nepal - Official Document</p>
             </div>
             ${chartHTML}
             <script>
@@ -320,7 +321,7 @@ export function useChartExport() {
 
   const viewFullscreen = useCallback(async ({ elementId }: { elementId: string }) => {
     try {
-      console.log("Toggling fullscreen for:", elementId)
+      console.log("Opening fullscreen view for:", elementId)
 
       const chartElement = await findChartElement(elementId)
       if (!chartElement) {
@@ -328,30 +329,122 @@ export function useChartExport() {
         return
       }
 
-      if (document.fullscreenElement) {
-        document.exitFullscreen().catch((err) => {
-          console.error("Error exiting fullscreen:", err)
-        })
-      } else {
-        const requestFullscreen =
-          chartElement.requestFullscreen ||
-          (chartElement as HTMLElement & { webkitRequestFullscreen?: () => Promise<void> }).webkitRequestFullscreen ||
-          (chartElement as HTMLElement & { mozRequestFullScreen?: () => Promise<void> }).mozRequestFullScreen ||
-          (chartElement as HTMLElement & { msRequestFullscreen?: () => Promise<void> }).msRequestFullscreen
+      // Create fullscreen overlay
+      const overlay = document.createElement("div")
+      overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.9);
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        box-sizing: border-box;
+      `
 
-        if (requestFullscreen) {
-          requestFullscreen.call(chartElement).catch((err: Error) => {
-            console.error("Error entering fullscreen:", err)
-            alert("Fullscreen mode not available. Please try pressing F11 manually.")
-          })
-        } else {
-          alert("Fullscreen not supported in your browser.")
+      // Create chart container
+      const chartContainer = document.createElement("div")
+      chartContainer.style.cssText = `
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        max-width: 95vw;
+        max-height: 95vh;
+        overflow: auto;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        position: relative;
+      `
+
+      // Create close button
+      const closeButton = document.createElement("button")
+      closeButton.innerHTML = "✕"
+      closeButton.style.cssText = `
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        background: #ef4444;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 32px;
+        height: 32px;
+        font-size: 16px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10001;
+        transition: background-color 0.2s;
+      `
+
+      closeButton.onmouseover = () => {
+        closeButton.style.background = "#dc2626"
+      }
+      closeButton.onmouseout = () => {
+        closeButton.style.background = "#ef4444"
+      }
+
+      // Create title
+      const title = document.createElement("h2")
+      title.textContent = "Haripur Municipality - Chart View"
+      title.style.cssText = `
+        margin: 0 0 16px 0;
+        color: #1f2937;
+        font-size: 20px;
+        font-weight: 600;
+        text-align: center;
+        padding-right: 40px;
+      `
+
+      // Clone chart element
+      const chartClone = chartElement.cloneNode(true) as HTMLElement
+      chartClone.style.cssText = `
+        width: 100%;
+        min-height: 400px;
+        max-width: 800px;
+        margin: 0 auto;
+      `
+
+      // Assemble fullscreen view
+      chartContainer.appendChild(closeButton)
+      chartContainer.appendChild(title)
+      chartContainer.appendChild(chartClone)
+      overlay.appendChild(chartContainer)
+
+      // Add to document
+      document.body.appendChild(overlay)
+      document.body.style.overflow = "hidden"
+
+      // Close handlers
+      const closeFullscreen = () => {
+        document.body.removeChild(overlay)
+        document.body.style.overflow = ""
+      }
+
+      closeButton.onclick = closeFullscreen
+      overlay.onclick = (e) => {
+        if (e.target === overlay) {
+          closeFullscreen()
         }
       }
-      console.log("Fullscreen operation completed")
+
+      // Keyboard handler
+      const handleKeydown = (e: KeyboardEvent) => {
+        if (e.key === "Escape") {
+          closeFullscreen()
+          document.removeEventListener("keydown", handleKeydown)
+        }
+      }
+      document.addEventListener("keydown", handleKeydown)
+
+      console.log("Fullscreen view opened successfully")
     } catch (error) {
-      console.error("Error toggling fullscreen:", error)
-      alert("Failed to toggle fullscreen. Please try again.")
+      console.error("Error opening fullscreen view:", error)
+      alert("Failed to open fullscreen view. Please try again.")
     }
   }, [])
 

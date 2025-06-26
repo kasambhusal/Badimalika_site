@@ -1,94 +1,164 @@
-"use client";
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useLogin } from "@/context/login-context";
 import {
   Users,
-  FileText,
-  Calendar,
-  MessageSquare,
+  House,
+  Home,
+  GraduationCap,
+  IdCardLanyard,
   TrendingUp,
-  Clock,
+  MapPin,
 } from "lucide-react";
+import { Get } from "@/lib/api";
 
-export default function DashboardPage() {
-  const { user } = useLogin();
+interface ReportsData {
+  metadata: {
+    total_households: number;
+    total_population: number;
+    total_male: number;
+    total_female: number;
+    wards_included: number[];
+    totals: {
+      demographics: {
+        population: {
+          total: number;
+          male: number;
+          female: number;
+          households: number;
+        };
+        education: {
+          illiterate: number;
+          bachelor_plus: number;
+        };
+        employment: {
+          foreign_employed: number;
+        };
+      };
+    };
+  };
+  ward_wise_data: Array<{
+    ward: number;
+    households: number;
+    demographics: {
+      population: {
+        total: number;
+        male: number;
+        female: number;
+      };
+    };
+  }>;
+}
+
+async function getReportsData(): Promise<ReportsData | null> {
+  try {
+    const data = (await Get({ url: "/public/reports/" })) as ReportsData;
+    return data;
+  } catch (error) {
+    console.error("Error fetching reports data:", error);
+    return null;
+  }
+}
+
+export default async function DashboardPage() {
+  const reportsData = await getReportsData();
+
+  // Calculate key statistics
+  const totalPopulation = reportsData?.metadata.total_population || 0;
+  const totalHouseholds = reportsData?.metadata.total_households || 0;
+  const totalMale = reportsData?.metadata.total_male || 0;
+  const totalFemale = reportsData?.metadata.total_female || 0;
+  const totalWards = reportsData?.metadata.wards_included.length || 0;
+  const illiterateCount =
+    reportsData?.metadata.totals.demographics.education.illiterate || 0;
+  const graduateCount =
+    reportsData?.metadata.totals.demographics.education.bachelor_plus || 0;
+  const foreignEmployed =
+    reportsData?.metadata.totals.demographics.employment.foreign_employed || 0;
+
+  // Calculate literacy rate
+  const literacyRate =
+    totalPopulation > 0
+      ? Math.round(
+          ((totalPopulation - illiterateCount) / totalPopulation) * 100
+        )
+      : 0;
 
   const stats = [
     {
-      name: "Total Citizens",
-      value: "2,847",
+      name: "कुल जनसंख्या",
+      value: totalPopulation.toLocaleString(),
       icon: Users,
-      change: "+12%",
-      changeType: "increase",
+      description: "Total Population",
+      color: "text-blue-600",
     },
     {
-      name: "Pending Applications",
-      value: "23",
-      icon: FileText,
-      change: "-5%",
-      changeType: "decrease",
+      name: "कुल घरधुरी",
+      value: totalHouseholds.toLocaleString(),
+      icon: Home,
+      description: "Total Households",
+      color: "text-green-600",
     },
     {
-      name: "Upcoming Events",
-      value: "8",
-      icon: Calendar,
-      change: "+3",
-      changeType: "increase",
+      name: "साक्षरता दर",
+      value: `${literacyRate}%`,
+      icon: GraduationCap,
+      description: "Literacy Rate",
+      color: "text-purple-600",
     },
     {
-      name: "New Feedback",
-      value: "15",
-      icon: MessageSquare,
-      change: "+8",
-      changeType: "increase",
+      name: "वडा संख्या",
+      value: totalWards.toString(),
+      icon: MapPin,
+      description: "Total Wards",
+      color: "text-orange-600",
     },
   ];
 
-  const recentActivities = [
+  const demographics = [
     {
-      id: 1,
-      type: "Birth Certificate",
-      applicant: "राम बहादुर श्रेष्ठ",
-      status: "Approved",
-      time: "2 hours ago",
+      label: "पुरुष",
+      value: totalMale.toLocaleString(),
+      percentage:
+        totalPopulation > 0
+          ? Math.round((totalMale / totalPopulation) * 100)
+          : 0,
     },
     {
-      id: 2,
-      type: "Business License",
-      applicant: "सीता देवी पौडेल",
-      status: "Pending",
-      time: "4 hours ago",
-    },
-    {
-      id: 3,
-      type: "Marriage Certificate",
-      applicant: "गोपाल तामाङ",
-      status: "Under Review",
-      time: "6 hours ago",
+      label: "महिला",
+      value: totalFemale.toLocaleString(),
+      percentage:
+        totalPopulation > 0
+          ? Math.round((totalFemale / totalPopulation) * 100)
+          : 0,
     },
   ];
+
+  // Get top 3 wards by population
+  const topWards =
+    reportsData?.ward_wise_data
+      .sort(
+        (a, b) =>
+          b.demographics.population.total - a.demographics.population.total
+      )
+      .slice(0, 3) || [];
 
   return (
     <div className="space-y-6">
       {/* Welcome Section */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">
-          Welcome back, {user?.userName}!
+          हरिपुर नगरपालिका डेशबोर्ड
         </h1>
-        <p className="text-gray-600">
-          Here&apos;s what&apos;s happening in हरिपुर नगरपालिका today.
-        </p>
+        <p className="text-gray-600">नगरपालिकाको तथ्याङ्क र जानकारी</p>
       </div>
 
-      {/* Stats Grid */}
+      {/* Main Stats Grid */}
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (
           <Card key={stat.name}>
             <CardContent className="p-6">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <stat.icon className="h-8 w-8 text-[#002c58]" />
+                  <stat.icon className={`h-8 w-8 ${stat.color}`} />
                 </div>
                 <div className="ml-4 w-0 flex-1">
                   <dl>
@@ -99,16 +169,9 @@ export default function DashboardPage() {
                       <div className="text-2xl font-semibold text-gray-900">
                         {stat.value}
                       </div>
-                      <div
-                        className={`ml-2 flex items-baseline text-sm font-semibold ${
-                          stat.changeType === "increase"
-                            ? "text-green-600"
-                            : "text-red-600"
-                        }`}
-                      >
-                        <TrendingUp className="h-4 w-4 mr-1" />
-                        {stat.change}
-                      </div>
+                    </dd>
+                    <dd className="text-xs text-gray-400 mt-1">
+                      {stat.description}
                     </dd>
                   </dl>
                 </div>
@@ -118,43 +181,35 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      {/* Recent Activities */}
+      {/* Demographics and Key Info */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {/* Gender Demographics */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
-              <Clock className="h-5 w-5 mr-2" />
-              Recent Activities
+              <Users className="h-5 w-5 mr-2" />
+              लैंगिक वितरण
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {recentActivities.map((activity) => (
+              {demographics.map((demo) => (
                 <div
-                  key={activity.id}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                  key={demo.label}
+                  className="flex items-center justify-between"
                 >
-                  <div>
-                    <p className="font-medium text-gray-900">{activity.type}</p>
-                    <p className="text-sm text-gray-600">
-                      {activity.applicant}
-                    </p>
+                  <div className="flex items-center">
+                    <div className="text-sm font-medium text-gray-900">
+                      {demo.label}
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <span
-                      className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        activity.status === "Approved"
-                          ? "bg-green-100 text-green-800"
-                          : activity.status === "Pending"
-                          ? "bg-yellow-100 text-yellow-800"
-                          : "bg-blue-100 text-blue-800"
-                      }`}
-                    >
-                      {activity.status}
-                    </span>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {activity.time}
-                    </p>
+                  <div className="flex items-center space-x-2">
+                    <div className="text-sm font-semibold text-gray-900">
+                      {demo.value}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      ({demo.percentage}%)
+                    </div>
                   </div>
                 </div>
               ))}
@@ -162,36 +217,120 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
+        {/* Top Wards by Population */}
         <Card>
           <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
+            <CardTitle className="flex items-center">
+              <TrendingUp className="h-5 w-5 mr-2" />
+              जनसंख्या अनुसार शीर्ष वडाहरू
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 gap-4">
-              <button className="p-4 text-left bg-[#002c58] text-white rounded-lg hover:bg-[#003d73] transition-colors">
-                <FileText className="h-6 w-6 mb-2" />
-                <p className="font-medium">New Application</p>
-                <p className="text-sm opacity-90">Process citizen request</p>
-              </button>
-              <button className="p-4 text-left bg-gray-100 text-gray-900 rounded-lg hover:bg-gray-200 transition-colors">
-                <Users className="h-6 w-6 mb-2" />
-                <p className="font-medium">Citizen Registry</p>
-                <p className="text-sm text-gray-600">Manage citizens</p>
-              </button>
-              <button className="p-4 text-left bg-gray-100 text-gray-900 rounded-lg hover:bg-gray-200 transition-colors">
-                <Calendar className="h-6 w-6 mb-2" />
-                <p className="font-medium">Schedule Event</p>
-                <p className="text-sm text-gray-600">Add new event</p>
-              </button>
-              <button className="p-4 text-left bg-gray-100 text-gray-900 rounded-lg hover:bg-gray-200 transition-colors">
-                <MessageSquare className="h-6 w-6 mb-2" />
-                <p className="font-medium">View Feedback</p>
-                <p className="text-sm text-gray-600">Check citizen feedback</p>
-              </button>
+            <div className="space-y-4">
+              {topWards.map((ward, index) => (
+                <div
+                  key={ward.ward}
+                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                >
+                  <div className="flex items-center">
+                    <div
+                      className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white mr-3 ${
+                        index === 0
+                          ? "bg-yellow-500"
+                          : index === 1
+                          ? "bg-gray-400"
+                          : "bg-orange-400"
+                      }`}
+                    >
+                      {index + 1}
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900">
+                        वडा नं. {ward.ward}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        {ward.households} घरधुरी
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-semibold text-gray-900">
+                      {ward.demographics.population.total.toLocaleString()}
+                    </p>
+                    <p className="text-xs text-gray-500">जनसंख्या</p>
+                  </div>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
       </div>
+
+      {/* Additional Statistics */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center">
+              <GraduationCap className="h-8 w-8 text-blue-600" />
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">स्नातक तह</p>
+                <p className="text-2xl font-bold">
+                  {graduateCount.toLocaleString()}
+                </p>
+                <p className="text-xs text-gray-500">Bachelor+ Graduates</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center">
+              <IdCardLanyard className="h-8 w-8 text-red-600" />
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">
+                  वैदेशिक रोजगार
+                </p>
+                <p className="text-2xl font-bold">
+                  {foreignEmployed.toLocaleString()}
+                </p>
+                <p className="text-xs text-gray-500">Foreign Employment</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center">
+              <House className="h-8 w-8 text-green-600" />
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">औसत घर आकार</p>
+                <p className="text-2xl font-bold">
+                  {totalHouseholds > 0
+                    ? Math.round(totalPopulation / totalHouseholds)
+                    : 0}
+                </p>
+                <p className="text-xs text-gray-500">Average Household Size</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Data Status */}
+      {reportsData && (
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between text-sm text-gray-600">
+              <span>
+                कुल {reportsData.metadata.wards_included.length} वडाको डेटा
+                समावेश
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import axios, { type AxiosResponse, type AxiosRequestConfig } from "axios";
 
-const Base_Url = "https://bhuvanpaudel.com.np/haripur/api/v1/user"; // Set your base URL here
+const Base_Url = "https://bhuvanpaudel.com.np/haripur/api/v1"; // Set your base URL here
 
 import { getApiHeaders } from "@/lib/api-headers";
 
@@ -12,13 +12,13 @@ interface ApiRequestConfig {
 
 interface ApiPostConfig {
   url: string;
-  data?: Record<string, unknown>;
+  data?: unknown;
   headers?: Record<string, string>;
 }
 
 interface ApiPutConfig {
   url: string;
-  data?: Record<string, unknown>;
+  data?: unknown;
   headers?: Record<string, string>;
 }
 

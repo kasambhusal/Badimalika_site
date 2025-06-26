@@ -9,8 +9,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
   Home,
-  Users,
-  FileText,
+  ClipboardPlus,
   Settings,
   BarChart3,
   MessageSquare,
@@ -30,33 +29,12 @@ interface SidebarItem {
 
 const navigation: SidebarItem[] = [
   { name: "Dashboard", href: "/dashboard", icon: Home },
-  { name: "Citizens", href: "/dashboard/citizens", icon: Users },
-  { name: "Reports", href: "/dashboard/reports", icon: BarChart3 },
+  { name: "Report", href: "/dashboard/report", icon: ClipboardPlus },
+  { name: "Plans", href: "/dashboard/plans", icon: BarChart3 },
   {
-    name: "Services",
+    name: "Organization",
     icon: Building,
-    children: [
-      {
-        name: "Birth Certificate",
-        href: "/dashboard/services/birth",
-        icon: FileText,
-      },
-      {
-        name: "Death Certificate",
-        href: "/dashboard/services/death",
-        icon: FileText,
-      },
-      {
-        name: "Marriage Certificate",
-        href: "/dashboard/services/marriage",
-        icon: FileText,
-      },
-      {
-        name: "Business License",
-        href: "/dashboard/services/business",
-        icon: FileText,
-      },
-    ],
+    href: "/dashboard/organization",
   },
   { name: "Feedback", href: "/dashboard/feedback", icon: MessageSquare },
   { name: "Profile", href: "/dashboard/profile", icon: User2 },

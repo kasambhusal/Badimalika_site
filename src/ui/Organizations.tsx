@@ -1,6 +1,7 @@
 "use client";
-import { useState, useMemo, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+import { useState, useEffect, useCallback } from "react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -24,225 +25,152 @@ import {
   ChevronLeft,
   ChevronRight,
   GraduationCap,
-  Heart,
+  Hospital,
   Banknote,
   Users,
+  RefreshCw,
 } from "lucide-react";
+import {
+  usePublicOrganizations,
+  usePublicOrganizationCategories,
+  useOrganizationStats,
+} from "@/hooks/use-public-organizations";
 import { toNepaliNumber } from "@/utils/NumberConvert";
 
-interface Organization {
-  id: number;
-  name: string;
-  category: string;
-  address: string;
+// Debounce hook
+function useDebounce(value: string, delay: number) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
 }
 
-// Static dummy data
-const staticOrganizationsData: Organization[] = [
-  {
-    id: 1,
-    name: "श्री सरस्वती माध्यमिक विद्यालय",
-    category: "Schools",
-    address: "हरिपुर-१, काठमाडौं",
-  },
-  {
-    id: 2,
-    name: "हरिपुर स्वास्थ्य केन्द्र",
-    category: "Health Institutions",
-    address: "हरिपुर-२, काठमाडौं",
-  },
-  {
-    id: 3,
-    name: "नेपाल बैंक शाखा",
-    category: "Financial Institutions",
-    address: "हरिपुर-३, काठमाडौं",
-  },
-  {
-    id: 4,
-    name: "युवा विकास संस्था",
-    category: "NGOs",
-    address: "हरिपुर-४, काठमाडौं",
-  },
-  {
-    id: 5,
-    name: "गौतम बुद्ध प्राथमिक विद्यालय",
-    category: "Schools",
-    address: "हरिपुर-५, काठमाडौं",
-  },
-  {
-    id: 6,
-    name: "महिला सशक्तिकरण केन्द्र",
-    category: "NGOs",
-    address: "हरिपुर-६, काठमाडौं",
-  },
-  {
-    id: 7,
-    name: "राष्ट्रिय वाणिज्य बैंक",
-    category: "Financial Institutions",
-    address: "हरिपुर-७, काठमाडौं",
-  },
-  {
-    id: 8,
-    name: "आयुर्वेदिक अस्पताल",
-    category: "Health Institutions",
-    address: "हरिपुर-८, काठमाडौं",
-  },
-  {
-    id: 9,
-    name: "जनता माध्यमिक विद्यालय",
-    category: "Schools",
-    address: "हरिपुर-९, काठमाडौं",
-  },
-  {
-    id: 10,
-    name: "बाल कल्याण संस्था",
-    category: "NGOs",
-    address: "हरिपुर-१०, काठमाडौं",
-  },
-  {
-    id: 11,
-    name: "कृषि विकास बैंक",
-    category: "Financial Institutions",
-    address: "हरिपुर-११, काठमाडौं",
-  },
-  {
-    id: 12,
-    name: "प्राथमिक स्वास्थ्य केन्द्र",
-    category: "Health Institutions",
-    address: "हरिपुर-१२, काठमाडौं",
-  },
-  {
-    id: 13,
-    name: "हिमालय उच्च माध्यमिक विद्यालय",
-    category: "Schools",
-    address: "हरिपुर-१३, काठमाडौं",
-  },
-  {
-    id: 14,
-    name: "वातावरण संरक्षण समिति",
-    category: "NGOs",
-    address: "हरिपुर-१४, काठमाडौं",
-  },
-  {
-    id: 15,
-    name: "सहकारी बचत तथा ऋण संस्था",
-    category: "Financial Institutions",
-    address: "हरिपुर-१५, काठमाडौं",
-  },
-  {
-    id: 16,
-    name: "मातृत्व अस्पताल",
-    category: "Health Institutions",
-    address: "हरिपुर-१६, काठमाडौं",
-  },
-  {
-    id: 17,
-    name: "शिक्षा विकास संस्था",
-    category: "NGOs",
-    address: "हरिपुर-१७, काठमाडौं",
-  },
-  {
-    id: 18,
-    name: "तकनिकी शिक्षालय",
-    category: "Schools",
-    address: "हरिपुर-१८, काठमाडौं",
-  },
-];
-
 export default function OrganizationsPage() {
-  const [organizationsData] = useState<Organization[]>(staticOrganizationsData);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(8);
+  const [itemsPerPage] = useState(10);
 
-  // Get unique categories from data
-  const categories = useMemo(() => {
-    const uniqueCategories = Array.from(
-      new Set(organizationsData.map((org) => org.category))
-    );
-    return uniqueCategories.sort();
-  }, [organizationsData]);
+  // Debounce search term
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
-  // Calculate statistics
-  const stats = useMemo(() => {
-    const schoolsCount = organizationsData.filter(
-      (org) => org.category === "Schools"
-    ).length;
-    const ngosCount = organizationsData.filter(
-      (org) => org.category === "NGOs"
-    ).length;
-    const financialCount = organizationsData.filter(
-      (org) => org.category === "Financial Institutions"
-    ).length;
-    const healthCount = organizationsData.filter(
-      (org) => org.category === "Health Institutions"
-    ).length;
+  // Calculate offset for pagination
+  const offset = (currentPage - 1) * itemsPerPage;
 
-    return {
-      schools: schoolsCount,
-      ngos: ngosCount,
-      financial: financialCount,
-      health: healthCount,
-    };
-  }, [organizationsData]);
-
-  // Filter organizations based on search and category
-  const filteredOrganizations = useMemo(() => {
-    return organizationsData.filter((org) => {
-      const matchesSearch =
-        org.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        org.address.toLowerCase().includes(searchTerm.toLowerCase());
-
-      const matchesCategory =
-        selectedCategory === "all" || org.category === selectedCategory;
-
-      return matchesSearch && matchesCategory;
+  // Fetch data using hooks
+  const { stats, loading: statsLoading } = useOrganizationStats();
+  const { categories, loading: categoriesLoading } =
+    usePublicOrganizationCategories();
+  const { organizations, total, loading, error, refetch } =
+    usePublicOrganizations({
+      limit: itemsPerPage,
+      offset,
+      searchTerm: debouncedSearchTerm,
+      category: selectedCategory,
     });
-  }, [organizationsData, searchTerm, selectedCategory]);
 
-  // Pagination
-  const totalPages = Math.ceil(filteredOrganizations.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentOrganizations = filteredOrganizations.slice(
-    startIndex,
-    endIndex
-  );
-
+  // Reset to first page when search term or category changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, selectedCategory]);
+  }, [debouncedSearchTerm, selectedCategory]);
 
-  const getIconForCategory = (category: string) => {
-    switch (category) {
-      case "Schools":
-        return <GraduationCap className="h-8 w-8" />;
-      case "NGOs":
-        return <Users className="h-8 w-8" />;
-      case "Financial Institutions":
-        return <Banknote className="h-8 w-8" />;
-      case "Health Institutions":
-        return <Heart className="h-8 w-8" />;
+  // Calculate pagination values
+  const totalPages = Math.ceil(total / itemsPerPage);
+  const startIndex = offset;
+  const endIndex = Math.min(offset + itemsPerPage, total);
+
+  // Pagination handlers
+  const goToPage = useCallback(
+    (page: number) => {
+      setCurrentPage(Math.max(1, Math.min(page, totalPages)));
+    },
+    [totalPages]
+  );
+
+  const goToPreviousPage = useCallback(() => {
+    goToPage(currentPage - 1);
+  }, [currentPage, goToPage]);
+
+  const goToNextPage = useCallback(() => {
+    goToPage(currentPage + 1);
+  }, [currentPage, goToPage]);
+
+  // Generate page numbers for pagination
+  const getPageNumbers = useCallback(() => {
+    const pages = [];
+    const maxVisiblePages = 5;
+
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      const startPage = Math.max(
+        1,
+        currentPage - Math.floor(maxVisiblePages / 2)
+      );
+      const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+      for (let i = startPage; i <= endPage; i++) {
+        pages.push(i);
+      }
+    }
+
+    return pages;
+  }, [currentPage, totalPages]);
+
+  // Get category display name
+  const getCategoryDisplay = (categoryValue: string) => {
+    const category = categories.find((cat) => cat.value === categoryValue);
+    return category ? category.label : categoryValue;
+  };
+
+  // Get icon for category
+  const getIconForCategory = (categoryValue: string) => {
+    switch (categoryValue) {
+      case "educational":
+        return <GraduationCap className="h-5 w-5" />;
+      case "health":
+        return <Hospital className="h-5 w-5" />;
+      case "financial":
+        return <Banknote className="h-5 w-5" />;
+      case "ngo":
+        return <Users className="h-5 w-5" />;
       default:
-        return <Building2 className="h-8 w-8" />;
+        return <Building2 className="h-5 w-5" />;
     }
   };
 
-  const getCategoryInNepali = (category: string) => {
-    switch (category) {
-      case "Schools":
-        return "विद्यालय";
-      case "NGOs":
-        return "गैरसरकारी संस्थाहरू";
-      case "Financial Institutions":
-        return "वित्तीय संस्था";
-      case "Health Institutions":
-        return "स्वास्थ्य संस्था";
-      default:
-        return category;
-    }
-  };
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-8 px-4">
+        <div className="max-w-7xl mx-auto space-y-6">
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <Building2 className="h-12 w-12 text-red-500 mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                समस्या भयो
+              </h3>
+              <p className="text-gray-600 text-center mb-6 max-w-md">{error}</p>
+              <Button onClick={refetch} variant="outline">
+                <RefreshCw className="h-4 w-4 mr-2" />
+                पुनः प्रयास गर्नुहोस्
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-4 sm:py-8 px-4">
@@ -259,7 +187,7 @@ export default function OrganizationsPage() {
             </p>
           </div>
           <div className="text-sm text-gray-500">
-            Total: {filteredOrganizations.length} organization(s)
+            Total: {total} organization(s)
           </div>
         </div>
 
@@ -273,28 +201,28 @@ export default function OrganizationsPage() {
                 </div>
                 <div className="text-right">
                   <div className="text-2xl sm:text-3xl font-bold text-blue-700">
-                    {toNepaliNumber(stats.schools)}
+                    {statsLoading ? "..." : toNepaliNumber(stats.educational)}
                   </div>
                   <div className="text-xs sm:text-sm text-blue-600 font-medium">
-                    विद्यालयहरू
+                    शैक्षिक संस्थाहरू
                   </div>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+          <Card className="bg-gradient-to-br from-red-50 to-red-100 border-red-200">
             <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
-                <div className="bg-green-500 text-white p-2 sm:p-3 rounded-lg">
-                  <Users className="h-6 w-6 sm:h-8 sm:w-8" />
+                <div className="bg-red-500 text-white p-2 sm:p-3 rounded-lg">
+                  <Hospital className="h-6 w-6 sm:h-8 sm:w-8" />
                 </div>
                 <div className="text-right">
-                  <div className="text-2xl sm:text-3xl font-bold text-green-700">
-                    {toNepaliNumber(stats.ngos)}
+                  <div className="text-2xl sm:text-3xl font-bold text-red-700">
+                    {statsLoading ? "..." : toNepaliNumber(stats.health)}
                   </div>
-                  <div className="text-xs sm:text-sm text-green-600 font-medium">
-                    गैरसरकारी संस्थाहरू
+                  <div className="text-xs sm:text-sm text-red-600 font-medium">
+                    स्वास्थ्य संस्थाहरू
                   </div>
                 </div>
               </div>
@@ -309,7 +237,7 @@ export default function OrganizationsPage() {
                 </div>
                 <div className="text-right">
                   <div className="text-2xl sm:text-3xl font-bold text-purple-700">
-                    {toNepaliNumber(stats.financial)}
+                    {statsLoading ? "..." : toNepaliNumber(stats.financial)}
                   </div>
                   <div className="text-xs sm:text-sm text-purple-600 font-medium">
                     वित्तीय संस्थाहरू
@@ -319,18 +247,18 @@ export default function OrganizationsPage() {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-red-50 to-red-100 border-red-200">
+          <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
             <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
-                <div className="bg-red-500 text-white p-2 sm:p-3 rounded-lg">
-                  <Heart className="h-6 w-6 sm:h-8 sm:w-8" />
+                <div className="bg-green-500 text-white p-2 sm:p-3 rounded-lg">
+                  <Users className="h-6 w-6 sm:h-8 sm:w-8" />
                 </div>
                 <div className="text-right">
-                  <div className="text-2xl sm:text-3xl font-bold text-red-700">
-                    {toNepaliNumber(stats.health)}
+                  <div className="text-2xl sm:text-3xl font-bold text-green-700">
+                    {statsLoading ? "..." : toNepaliNumber(stats.ngo)}
                   </div>
-                  <div className="text-xs sm:text-sm text-red-600 font-medium">
-                    स्वास्थ्य संस्थाहरू
+                  <div className="text-xs sm:text-sm text-green-600 font-medium">
+                    गैरसरकारी संस्थाहरू
                   </div>
                 </div>
               </div>
@@ -345,7 +273,7 @@ export default function OrganizationsPage() {
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
-                  placeholder="Search organizations by name or address..."
+                  placeholder="संस्थाको नाम वा ठेगानाबाट खोज्नुहोस्..."
                   className="pl-10"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -355,137 +283,147 @@ export default function OrganizationsPage() {
                 <Select
                   value={selectedCategory}
                   onValueChange={setSelectedCategory}
+                  disabled={categoriesLoading}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Filter by category" />
+                    <SelectValue placeholder="श्रेणी छान्नुहोस्" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Categories</SelectItem>
+                    <SelectItem value="all">सबै श्रेणी</SelectItem>
                     {categories.map((category) => (
-                      <SelectItem key={category} value={category}>
-                        {getCategoryInNepali(category)}
+                      <SelectItem key={category.value} value={category.value}>
+                        {category.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
+              <Button variant="outline" onClick={refetch} disabled={loading}>
+                <RefreshCw
+                  className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`}
+                />
+                रिफ्रेस
+              </Button>
             </div>
           </CardContent>
         </Card>
 
         {/* Organizations Table */}
         <Card>
-          <CardHeader>
-            <CardTitle>Registered Organizations</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Organization Name</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Address</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {currentOrganizations.length === 0 ? (
-                    <TableRow>
-                      <TableCell
-                        colSpan={3}
-                        className="text-center py-8 text-gray-500"
-                      >
-                        No organizations found matching your criteria
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    currentOrganizations.map((org) => (
-                      <TableRow key={org.id} className="hover:bg-gray-50">
-                        <TableCell>
-                          <div className="font-medium text-gray-900">
-                            {org.name}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <div className="text-gray-500">
-                              {getIconForCategory(org.category)}
-                            </div>
-                            <span className="text-sm text-gray-600">
-                              {getCategoryInNepali(org.category)}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-sm text-gray-600">
-                            {org.address}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex flex-col sm:flex-row items-center justify-between mt-6 gap-4">
-                <div className="text-sm text-gray-500">
-                  Showing {startIndex + 1} to{" "}
-                  {Math.min(endIndex, filteredOrganizations.length)} of{" "}
-                  {filteredOrganizations.length} results
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      setCurrentPage((prev) => Math.max(prev - 1, 1))
-                    }
-                    disabled={currentPage === 1}
-                  >
-                    <ChevronLeft className="h-4 w-4 mr-1" />
-                    Previous
-                  </Button>
-                  <div className="flex items-center gap-1">
-                    {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                      let page;
-                      if (totalPages <= 5) {
-                        page = i + 1;
-                      } else if (currentPage <= 3) {
-                        page = i + 1;
-                      } else if (currentPage >= totalPages - 2) {
-                        page = totalPages - 4 + i;
-                      } else {
-                        page = currentPage - 2 + i;
-                      }
-                      return (
-                        <Button
-                          key={page}
-                          variant={currentPage === page ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => setCurrentPage(page)}
-                          className="w-8 h-8 p-0"
-                        >
-                          {page}
-                        </Button>
-                      );
-                    })}
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                    }
-                    disabled={currentPage === totalPages}
-                  >
-                    Next
-                    <ChevronRight className="h-4 w-4 ml-1" />
-                  </Button>
+          <CardContent className="p-6">
+            {loading && organizations.length === 0 ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                  <p className="text-gray-600">संस्थाहरू लोड हुँदैछ...</p>
                 </div>
               </div>
+            ) : organizations.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <Building2 className="h-12 w-12 text-gray-400 mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  कुनै संस्था फेला परेन
+                </h3>
+                <p className="text-gray-600 text-center max-w-md">
+                  {debouncedSearchTerm || selectedCategory !== "all"
+                    ? "खोजी मापदण्डअनुसार कुनै संस्था फेला परेन। अर्को खोजी शब्द प्रयोग गर्नुहोस्।"
+                    : "हाल कुनै संस्थाहरू उपलब्ध छैनन्।"}
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>संस्थाको नाम</TableHead>
+                        <TableHead>श्रेणी</TableHead>
+                        <TableHead>ठेगाना</TableHead>
+                        <TableHead>फोन नम्बर</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {organizations.map((org) => (
+                        <TableRow key={org.id} className="hover:bg-gray-50">
+                          <TableCell>
+                            <div className="font-medium text-gray-900">
+                              {org.name}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <div className="text-gray-500">
+                                {getIconForCategory(org.category)}
+                              </div>
+                              <span className="text-sm text-gray-600">
+                                {getCategoryDisplay(org.category)}
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-sm text-gray-600">
+                              {org.address || "N/A"}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-sm text-gray-600">
+                              {org.phone_no || "N/A"}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="flex flex-col sm:flex-row items-center justify-between mt-6 gap-4 pt-6 border-t">
+                    <div className="text-sm text-gray-500 order-2 sm:order-1">
+                      Showing {startIndex + 1} to {endIndex} of {total} results
+                    </div>
+                    <div className="flex items-center gap-2 order-1 sm:order-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={goToPreviousPage}
+                        disabled={currentPage === 1}
+                        className="text-xs sm:text-sm"
+                      >
+                        <ChevronLeft className="h-4 w-4 mr-1" />
+                        <span className="hidden sm:inline">Previous</span>
+                        <span className="sm:hidden">Prev</span>
+                      </Button>
+                      <div className="flex items-center gap-1">
+                        {getPageNumbers().map((page) => (
+                          <Button
+                            key={page}
+                            variant={
+                              currentPage === page ? "default" : "outline"
+                            }
+                            size="sm"
+                            onClick={() => goToPage(page)}
+                            className="w-8 h-8 p-0 text-xs"
+                          >
+                            {page}
+                          </Button>
+                        ))}
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={goToNextPage}
+                        disabled={currentPage === totalPages}
+                        className="text-xs sm:text-sm"
+                      >
+                        <span className="hidden sm:inline">Next</span>
+                        <span className="sm:hidden">Next</span>
+                        <ChevronRight className="h-4 w-4 ml-1" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </CardContent>
         </Card>

@@ -14,6 +14,7 @@ import {
 import { ChartContainer } from "@/components/ui/chart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartMenu } from "./chart-menu";
+import { toNepaliNumber, formatNepaliNumber } from "@/utils/NumberConvert";
 
 interface BarData {
   category: string;
@@ -24,14 +25,16 @@ interface BarData {
 interface BarChartComponentProps {
   data: BarData[];
   title?: string;
+  xAxisLabel?: string;
   yAxisLabel?: string;
   className?: string;
 }
 
 export function BarChartComponent({
   data,
-  title = "Bar Chart",
-  yAxisLabel = "Value",
+  title = "बार चार्ट",
+  xAxisLabel = "श्रेणी",
+  yAxisLabel = "मान",
   className,
 }: BarChartComponentProps) {
   const [activeBar, setActiveBar] = useState<string | null>(null);
@@ -94,7 +97,7 @@ export function BarChartComponent({
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={data}
-                margin={{ top: 20, right: 10, left: 10, bottom: 60 }}
+                margin={{ top: 20, right: 10, left: 10, bottom: 80 }}
               >
                 <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                 <XAxis
@@ -104,21 +107,54 @@ export function BarChartComponent({
                   textAnchor={window.innerWidth < 640 ? "end" : "middle"}
                   height={window.innerWidth < 640 ? 80 : 60}
                   interval={0}
+                  label={{
+                    value: xAxisLabel,
+                    position: "insideBottom",
+                    offset: -5,
+                    style: {
+                      textAnchor: "middle",
+                      fontSize: "12px",
+                      fill: "#6B7280",
+                    },
+                  }}
                 />
                 <YAxis
                   tick={{ fontSize: 10 }}
-                  width={window.innerWidth < 640 ? 40 : 60}
+                  width={window.innerWidth < 640 ? 50 : 70}
+                  tickFormatter={(value) => toNepaliNumber(value)}
+                  label={{
+                    value: yAxisLabel,
+                    angle: -90,
+                    position: "insideLeft",
+                    style: {
+                      textAnchor: "middle",
+                      fontSize: "12px",
+                      fill: "#6B7280",
+                    },
+                  }}
                 />
                 <Tooltip
-                  content={({ active, payload, label }) => {
+                  content={({ active, payload }) => {
                     if (active && payload && payload.length) {
-                      const data = payload[0].payload as BarData;
+                      const total = data.reduce(
+                        (sum, item) => sum + item.value,
+                        0
+                      );
+                      const barData = payload[0].payload as BarData;
+                      const percent = ((barData.value / total) * 100).toFixed(
+                        1
+                      );
+
                       return (
-                        <div className="bg-white p-3 border rounded shadow-lg">
-                          <p className="font-semibold text-sm">{label}</p>
-                          <p className="text-sm text-gray-600">
+                        <div className="bg-white p-3 border rounded shadow-lg text-sm">
+                          <p className="font-semibold">{barData.category}</p>
+                          <p className="text-gray-600">
                             <span className="font-medium">{yAxisLabel}:</span>{" "}
-                            {data.value}
+                            {formatNepaliNumber(barData.value)}
+                          </p>
+                          <p className="text-gray-600">
+                            <span className="font-medium">प्रतिशत:</span>{" "}
+                            {toNepaliNumber(percent)}%
                           </p>
                         </div>
                       );
@@ -127,6 +163,7 @@ export function BarChartComponent({
                   }}
                   cursor={{ fill: "rgba(0, 0, 0, 0.1)" }}
                 />
+
                 <Bar
                   dataKey="value"
                   onClick={handleBarClick}

@@ -1,15 +1,16 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, memo } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import type { LayerInfo } from "@/hooks/use-map-data";
 import type { GeoJSONResponse } from "@/lib/map-api-client";
 
-// Fix for default markers in Leaflet with Next.js
-delete (
-  L.Icon.Default.prototype as L.Icon.Default & { _getIconUrl?: () => void }
-)._getIconUrl;
+interface IconDefaultWithGetIconUrl extends L.Icon.Default {
+  _getIconUrl?: () => string;
+}
+// Fix Leaflet icons
+delete (L.Icon.Default.prototype as IconDefaultWithGetIconUrl)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl:
     "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
@@ -21,199 +22,338 @@ L.Icon.Default.mergeOptions({
 
 interface MapComponentProps {
   activeLayers: LayerInfo[];
-  layerData: Map<string, GeoJSONResponse>;
+  getLayerData: (layerName: string) => GeoJSONResponse | undefined;
+  wardBoundariesLoaded: boolean;
 }
 
-export default function MapComponent({
+// Memoize to prevent unnecessary re-renders
+const MapComponent = memo(function MapComponent({
   activeLayers,
-  layerData,
+  getLayerData,
+  wardBoundariesLoaded,
 }: MapComponentProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const layersRef = useRef<Map<string, L.LayerGroup>>(new Map());
+  const wardBoundariesRef = useRef<L.LayerGroup | null>(null);
+  const wardLabelsRef = useRef<L.LayerGroup | null>(null);
   const [isMobile, setIsMobile] = useState(false);
+  const defaultViewRef = useRef<{
+    center: L.LatLngExpression;
+    zoom: number;
+  } | null>(null);
 
-  // Check if mobile
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
-
-  // Initialize map
+  // Initialize map only once
   useEffect(() => {
     if (!mapRef.current || mapInstanceRef.current) return;
 
-    // Initialize map centered on Haripur Municipality
     const map = L.map(mapRef.current, {
-      // Mobile-friendly options
       touchZoom: true,
-      zoomControl: false, // We'll add it manually
-    }).setView([27.02, 85.57], isMobile ? 11 : 12);
+      zoomControl: false,
+    }).setView([27.02, 85.57], window.innerWidth < 768 ? 13 : 14);
 
-    // Add zoom control to bottom right
-    L.control
-      .zoom({
-        position: "bottomright",
-      })
-      .addTo(map);
+    // 💾 Save default center and zoom
+    defaultViewRef.current = {
+      center: map.getCenter(),
+      zoom: map.getZoom(),
+    };
 
-    // Add OpenStreetMap tiles
+    L.control.zoom({ position: "bottomright" }).addTo(map);
+
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution:
-        '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      attribution: "© OpenStreetMap contributors",
       maxZoom: 19,
     }).addTo(map);
 
-    // Add municipality boundary (approximate)
-    const municipalityBounds: [number, number][] = [
-      [26.97, 85.5],
-      [27.07, 85.5],
-      [27.07, 85.64],
-      [26.97, 85.64],
-      [26.97, 85.5],
-    ];
-
-    L.polygon(municipalityBounds, {
-      color: "#1f2937",
-      weight: 2,
-      fillColor: "#3b82f6",
-      fillOpacity: 0.1,
-      dashArray: "5, 5",
-    })
-      .addTo(map)
-      .bindPopup(
-        `<div class="p-3">
-          <h3 class="font-semibold text-sm mb-1 text-blue-900">Haripur Municipality</h3>
-          <p class="text-xs text-gray-600">Administrative Boundary</p>
-          <p class="text-xs text-gray-500 mt-1">Government of Nepal</p>
-        </div>`,
-        { className: "custom-popup" }
-      );
-
     mapInstanceRef.current = map;
 
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+
     return () => {
+      window.removeEventListener("resize", checkMobile);
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
       }
     };
-  }, [isMobile]);
+  }, []);
 
-  // Update layers based on active layers and available data
+  // Handle ward boundaries with proper data structure
+  useEffect(() => {
+    if (!mapInstanceRef.current || !wardBoundariesLoaded) return;
+
+    const map = mapInstanceRef.current;
+    const wardData = getLayerData("Wards");
+
+    // Remove existing ward boundaries and labels
+    if (wardBoundariesRef.current) {
+      map.removeLayer(wardBoundariesRef.current);
+      wardBoundariesRef.current = null;
+    }
+    if (wardLabelsRef.current) {
+      map.removeLayer(wardLabelsRef.current);
+      wardLabelsRef.current = null;
+    }
+
+    if (wardData?.features && wardData.features.length > 0) {
+      console.log(
+        "Loading ward boundaries with",
+        wardData.features.length,
+        "wards"
+      );
+
+      const wardBoundaries = L.geoJSON(wardData, {
+        style: () => ({
+          color: "#000000", // Black outline
+          weight: 3, // Thick outline
+          opacity: 1,
+          fillColor: "transparent", // No fill
+          fillOpacity: 0,
+          dashArray: "0", // Solid line
+        }),
+        onEachFeature: (feature, layer) => {
+          if (feature.properties) {
+            const props = feature.properties;
+
+            // Extract ward number from WNO property
+            const wardNo =
+              props.WNO ||
+              props.WARD_NO ||
+              props.Ward_No ||
+              props.ward_no ||
+              feature.id;
+            const district = props.DISTRICT || "N/A";
+            const area = props.AAN || "N/A";
+            const shapeArea = props.Shape_Area
+              ? (props.Shape_Area * 100).toFixed(4)
+              : "N/A";
+            const shapeLength = props.Shape_Length
+              ? props.Shape_Length.toFixed(4)
+              : "N/A";
+
+            // Create comprehensive popup content
+            const popupContent = `
+              <div class="p-4 min-w-[280px] max-w-[350px]">
+                <h3 class="font-bold text-lg mb-3 text-blue-900 border-b border-blue-200 pb-2">
+                  वार्ड नम्बर ${wardNo}
+                </h3>
+                
+                <div class="space-y-2 text-sm">
+                  <div class="bg-blue-50 p-2 rounded">
+                    <span class="font-semibold text-blue-700">जिल्ला:</span>
+                    <span class="text-blue-900 ml-2">${district}</span>
+                  </div>
+                  
+                  <div class="bg-green-50 p-2 rounded">
+                    <span class="font-semibold text-green-700">क्षेत्र:</span>
+                    <span class="text-green-900 ml-2">${area}</span>
+                  </div>
+                  
+                  ${
+                    shapeArea !== "N/A"
+                      ? `
+                    <div class="flex justify-between items-center py-1">
+                      <span class="font-medium text-gray-600">क्षेत्रफल:</span>
+                      <span class="text-gray-800">${shapeArea} वर्ग किमी</span>
+                    </div>
+                  `
+                      : ""
+                  }
+                  
+                  ${
+                    shapeLength !== "N/A"
+                      ? `
+                    <div class="flex justify-between items-center py-1">
+                      <span class="font-medium text-gray-600">परिधि:</span>
+                      <span class="text-gray-800">${shapeLength} किमी</span>
+                    </div>
+                  `
+                      : ""
+                  }
+                  
+                  ${
+                    props.VCODE
+                      ? `
+                    <div class="flex justify-between items-center py-1">
+                      <span class="font-medium text-gray-600">गाउँ कोड:</span>
+                      <span class="text-gray-800">${props.VCODE}</span>
+                    </div>
+                  `
+                      : ""
+                  }
+                </div>
+                
+                <div class="mt-3 pt-2 border-t border-gray-200 text-center">
+                  <span class="text-xs text-gray-500">फिचर ID: ${
+                    feature.id
+                  }</span>
+                </div>
+              </div>
+            `;
+
+            layer.bindPopup(popupContent, {
+              maxWidth: isMobile ? 300 : 350,
+              className: "custom-popup",
+              closeButton: true,
+              autoPan: true,
+              autoPanPadding: [10, 10],
+            });
+
+            // Add hover tooltip
+            layer.bindTooltip(`वार्ड ${wardNo} - ${area}`, {
+              permanent: false,
+              direction: "center",
+              className: "custom-tooltip",
+            });
+          }
+        },
+      });
+
+      // Create ward labels layer
+      const wardLabels = L.layerGroup();
+
+      wardData.features.forEach((feature) => {
+        if (
+          feature.geometry.type === "Polygon" ||
+          feature.geometry.type === "MultiPolygon"
+        ) {
+          try {
+            const tempLayer = L.geoJSON(feature);
+            const bounds = tempLayer.getBounds();
+            const center = bounds.getCenter();
+
+            // Extract ward number from WNO property
+            const wardNo =
+              feature.properties?.WNO ||
+              feature.properties?.WARD_NO ||
+              feature.properties?.Ward_No ||
+              feature.properties?.ward_no ||
+              feature.id;
+
+            if (wardNo) {
+              // Create ward number label with improved styling
+              const wardLabel = L.divIcon({
+                html: `<div style="
+                  background: white;
+                  border: 2px solid #000;
+                  border-radius: 50%;
+                  width: 28px;
+                  height: 28px;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  font-weight: bold;
+                  font-size: 13px;
+                  color: #000;
+                  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+                  font-family: Arial, sans-serif;
+                ">${wardNo}</div>`,
+                className: "ward-label",
+                iconSize: [28, 28],
+                iconAnchor: [14, 14],
+              });
+
+              L.marker(center, { icon: wardLabel }).addTo(wardLabels);
+            }
+          } catch (error) {
+            console.warn(
+              "Could not add ward label for feature:",
+              feature.id,
+              error
+            );
+          }
+        }
+      });
+
+      // Add layers to map
+      wardBoundaries.addTo(map);
+      wardLabels.addTo(map);
+      wardBoundariesRef.current = wardBoundaries;
+      wardLabelsRef.current = wardLabels;
+
+      // Fit map to ward boundaries
+      try {
+        const bounds = wardBoundaries.getBounds();
+        if (bounds.isValid()) {
+          map.fitBounds(bounds, {
+            padding: isMobile ? [10, 10] : [10, 10], // reduced padding
+            maxZoom: isMobile ? 16 : 17, // allow tighter zoom
+            animate: true,
+            duration: 1.0, // optional smooth zoom
+          });
+        }
+      } catch (error) {
+        console.warn("Could not fit ward bounds:", error);
+      }
+    } else {
+      console.warn("No ward features found in data");
+    }
+  }, [wardBoundariesLoaded, getLayerData, isMobile]);
+
+  // Handle other layers efficiently
   useEffect(() => {
     if (!mapInstanceRef.current) return;
 
     const map = mapInstanceRef.current;
+    const activeLayerNames = new Set(activeLayers.map((l) => l.name));
 
-    // Remove layers that are no longer active
-    layersRef.current.forEach((layer, layerId) => {
-      if (!activeLayers.find((l) => l.name === layerId)) {
+    // Remove inactive layers
+    layersRef.current.forEach((layer, layerName) => {
+      if (!activeLayerNames.has(layerName)) {
         map.removeLayer(layer);
-        layersRef.current.delete(layerId);
+        layersRef.current.delete(layerName);
       }
     });
 
     // Add new active layers
     activeLayers.forEach((layerInfo) => {
       if (!layersRef.current.has(layerInfo.name)) {
-        const geoJsonData = layerData.get(layerInfo.name);
+        const geoJsonData = getLayerData(layerInfo.name);
 
-        if (geoJsonData && geoJsonData.features) {
+        if (geoJsonData?.features) {
           const layer = L.geoJSON(geoJsonData, {
             pointToLayer: (feature, latlng) => {
-              return L.circleMarker(latlng, {
-                radius: isMobile ? 5 : 6,
-                fillColor: layerInfo.color,
-                color: "#fff",
-                weight: isMobile ? 1.5 : 2,
-                opacity: 1,
-                fillOpacity: 0.8,
+              const size = layerInfo.name === "bdpt_v2" ? 8 : 6;
+              const customIcon = L.divIcon({
+                html: `<div style="background: ${layerInfo.color}; width: ${size}px; height: ${size}px; border-radius: 50%;"></div>`,
+                className: "custom-marker",
+                iconSize: [size + 2, size + 2],
+                iconAnchor: [size / 2 + 1, size / 2 + 1],
               });
+              return L.marker(latlng, { icon: customIcon });
             },
-            style: () => {
-              // Style for non-point features
-              return {
-                color: layerInfo.color,
-                weight: isMobile ? 1.5 : 2,
-                opacity: 0.8,
-                fillOpacity: 0.3,
-              };
-            },
+            style: () => ({
+              color: layerInfo.color,
+              weight: 2,
+              opacity: 0.8,
+              fillOpacity: 0.3,
+            }),
             onEachFeature: (feature, layer) => {
               if (feature.properties) {
-                // Create popup content from properties
-                const properties = feature.properties;
-                let popupContent = `
-                  <div class="p-3 min-w-[200px] max-w-[300px]">
-                    <h3 class="font-semibold text-sm mb-2 text-blue-900 border-b border-blue-100 pb-1">
-                      ${layerInfo.displayName}
-                    </h3>
-                `;
+                const props = feature.properties;
+                const name =
+                  props.BUILDING_FUNCTION ||
+                  props.VIL_NAME ||
+                  props.BFU_DESCRIPTION ||
+                  props.name ||
+                  layerInfo.displayName;
 
-                // Handle village names specially
-                if (properties.VIL_NAME) {
-                  popupContent += `
-                    <div class="mb-2 bg-blue-50 p-2 rounded">
-                      <span class="font-medium text-xs text-blue-700">Village Name:</span>
-                      <span class="text-sm text-blue-900 ml-1 font-semibold">${properties.VIL_NAME}</span>
-                    </div>
-                  `;
-                }
+                layer.bindPopup(
+                  `
+                <div class="p-3">
+                  <h3 class="font-bold text-blue-900 mb-2">${layerInfo.displayName}</h3>
+                  <div class="text-sm">${name}</div>
+                </div>
+              `,
+                  { maxWidth: 250 }
+                );
 
-                // Add other properties (limit on mobile)
-                const propertyEntries = Object.entries(properties);
-                const maxProperties = isMobile ? 3 : 6;
-
-                propertyEntries
-                  .slice(0, maxProperties)
-                  .forEach(([key, value]) => {
-                    if (
-                      key !== "VIL_NAME" &&
-                      value !== null &&
-                      value !== undefined &&
-                      value !== ""
-                    ) {
-                      const displayKey = key
-                        .replace(/_/g, " ")
-                        .replace(/\b\w/g, (l) => l.toUpperCase());
-                      popupContent += `
-                      <div class="mb-1 flex justify-between">
-                        <span class="font-medium text-xs text-gray-600">${displayKey}:</span>
-                        <span class="text-xs text-gray-800 ml-2">${value}</span>
-                      </div>
-                    `;
-                    }
-                  });
-
-                if (propertyEntries.length > maxProperties) {
-                  popupContent += `
-                    <div class="text-xs text-gray-500 mt-2 text-center italic">
-                      +${
-                        propertyEntries.length - maxProperties
-                      } more properties available
-                    </div>
-                  `;
-                }
-
-                popupContent += `
-                    <div class="mt-3 pt-2 border-t border-gray-200 text-center">
-                      <span class="text-xs text-gray-500">Feature ID: ${feature.id}</span>
-                    </div>
-                  </div>
-                `;
-
-                layer.bindPopup(popupContent, {
-                  maxWidth: isMobile ? 280 : 320,
-                  className: "custom-popup",
-                  closeButton: true,
-                  autoPan: true,
-                  autoPanPadding: [10, 10],
+                layer.bindTooltip(name, {
+                  permanent: false,
+                  direction: "top",
+                  offset: [0, -10],
                 });
               }
             },
@@ -224,30 +364,15 @@ export default function MapComponent({
         }
       }
     });
-
-    // Fit map to show all active layers if any exist
-    if (activeLayers.length > 0) {
-      const group = new L.FeatureGroup();
-      layersRef.current.forEach((layer) => {
-        group.addLayer(layer);
-      });
-
-      if (group.getLayers().length > 0) {
-        try {
-          map.fitBounds(group.getBounds(), {
-            padding: isMobile ? [20, 20] : [30, 30],
-            maxZoom: isMobile ? 14 : 15,
-          });
-        } catch (error) {
-          console.warn("Could not fit bounds:", error);
-        }
-      }
-    }
-  }, [activeLayers, layerData, isMobile]);
+  }, [activeLayers, getLayerData]);
 
   return (
-    <div ref={mapRef} className="h-full w-full" style={{ minHeight: "400px" }}>
-      {/* Map loads here */}
-    </div>
+    <div
+      ref={mapRef}
+      className="h-full w-full"
+      style={{ minHeight: "400px" }}
+    />
   );
-}
+});
+
+export default MapComponent;

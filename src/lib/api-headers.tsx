@@ -1,33 +1,33 @@
-import { CookieManager } from "@/lib/cookies";
+  import { CookieManager } from "@/lib/cookies";
 
-export const getApiHeaders = () => {
-  const tokenData = CookieManager.getSecureToken();
+  export const getApiHeaders = () => {
+    const tokenData = CookieManager.getSecureToken();
 
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+
+    if (tokenData?.token) {
+      headers["Authorization"] = `Bearer ${tokenData.token}`;
+    }
+
+    return headers;
   };
 
-  if (tokenData?.token) {
-    headers["Authorization"] = `Bearer ${tokenData.token}`;
-  }
+  export const getApiHeadersWithAuth = () => {
+    return getApiHeaders();
+  };
 
-  return headers;
-};
+  // For multipart/form-data (file uploads)
+  export const getMultipartHeaders = () => {
+    const tokenData = CookieManager.getSecureToken();
 
-export const getApiHeadersWithAuth = () => {
-  return getApiHeaders();
-};
+    const headers: Record<string, string> = {};
 
-// For multipart/form-data (file uploads)
-export const getMultipartHeaders = () => {
-  const tokenData = CookieManager.getSecureToken();
+    if (tokenData?.token) {
+      headers["Authorization"] = `Bearer ${tokenData.token}`;
+    }
 
-  const headers: Record<string, string> = {};
-
-  if (tokenData?.token) {
-    headers["Authorization"] = `Bearer ${tokenData.token}`;
-  }
-
-  // Don't set Content-Type for multipart, let browser set it with boundary
-  return headers;
-};
+    // Don't set Content-Type for multipart, let browser set it with boundary
+    return headers;
+  };

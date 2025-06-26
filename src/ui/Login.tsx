@@ -180,7 +180,7 @@ const Login: React.FC = () => {
     try {
       // Use your API endpoint
       const response = (await Post({
-        url: "/login/",
+        url: "/user/login/",
         data: {
           user_name: formData.user_name,
           password: formData.password,
@@ -255,7 +255,9 @@ const Login: React.FC = () => {
           <CardTitle className="text-2xl font-bold text-[#002c58]">
             हरिपुर नगरपालिका
           </CardTitle>
-          <p className="text-gray-600 text-sm mt-1">Local Government Portal Login</p>
+          <p className="text-gray-600 text-sm mt-1">
+            Local Government Portal Login
+          </p>
         </CardHeader>
 
         <CardContent className="p-8">

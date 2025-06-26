@@ -4,7 +4,7 @@ import React from "react";
 export default function TopNav() {
   return (
     <div className="w-full flex justify-center top-nav">
-      <div className="w-8/10 flex items-center h-[100px] justify-between">
+      <div className="w-20/19 lg:w-8/10 flex items-center h-[100px] justify-between">
         <div className="flex items-center gap-2">
           <Image
             src="/assets/images/nepal_logo.png"

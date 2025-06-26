@@ -1,34 +1,44 @@
-"use client"
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
-import { User, Mail, Phone, MapPin, Calendar, Edit, Camera, Shield, UserCheck, Settings } from "lucide-react"
-import { useLogin } from "@/context/login-context"
-import { Get } from "@/lib/api"
-import { getUserIdFromToken } from "@/lib/jwt-utils"
-import Link from "next/link"
-import Image from "next/image"
-import type { ErrorWithResponse } from "@/types/api"
+"use client";
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import {
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  Calendar,
+  Edit,
+  Shield,
+  UserCheck,
+  Settings,
+} from "lucide-react";
+import { useLogin } from "@/context/login-context";
+import { Get } from "@/lib/api";
+import { getUserIdFromToken } from "@/lib/jwt-utils";
+import Link from "next/link";
+import Image from "next/image";
+import type { ErrorWithResponse } from "@/types/api";
 
 interface UserProfileResponse {
-  id: number
-  user_groups_name: string
-  last_login: string | null
-  is_superuser: boolean
-  email: string
-  user_name: string
-  first_name: string
-  last_name: string
-  start_date: string
-  is_staff: boolean
-  is_active: boolean
-  gender: number | null
-  birth_date: string | null
-  address: string
-  mobile_no: string
-  photo: string | null
+  id: number;
+  user_groups_name: string;
+  last_login: string | null;
+  is_superuser: boolean;
+  email: string;
+  user_name: string;
+  first_name: string;
+  last_name: string;
+  start_date: string;
+  is_staff: boolean;
+  is_active: boolean;
+  gender: number | null;
+  birth_date: string | null;
+  address: string;
+  mobile_no: string;
+  photo: string | null;
 }
 
 // Modern SVG Icons for Gender
@@ -43,7 +53,7 @@ const MaleIcon = () => (
       strokeLinejoin="round"
     />
   </svg>
-)
+);
 
 const FemaleIcon = () => (
   <svg viewBox="0 0 24 24" className="w-6 h-6 text-pink-500">
@@ -56,7 +66,7 @@ const FemaleIcon = () => (
       strokeLinejoin="round"
     />
   </svg>
-)
+);
 
 const OtherIcon = () => (
   <svg viewBox="0 0 24 24" className="w-6 h-6 text-purple-500">
@@ -69,101 +79,111 @@ const OtherIcon = () => (
       strokeLinejoin="round"
     />
   </svg>
-)
+);
 
 const getGenderIcon = (gender: number | null) => {
   switch (gender) {
     case 1:
-      return <MaleIcon />
+      return <MaleIcon />;
     case 2:
-      return <FemaleIcon />
+      return <FemaleIcon />;
     case 3:
-      return <OtherIcon />
+      return <OtherIcon />;
     default:
-      return <User className="w-6 h-6 text-gray-400" />
+      return <User className="w-6 h-6 text-gray-400" />;
   }
-}
+};
 
 const getGenderText = (gender: number | null) => {
   switch (gender) {
     case 1:
-      return "Male"
+      return "Male";
     case 2:
-      return "Female"
+      return "Female";
     case 3:
-      return "Other"
+      return "Other";
     default:
-      return "Not specified"
+      return "Not specified";
   }
-}
+};
 
 const getGenderColor = (gender: number | null) => {
   switch (gender) {
     case 1:
-      return "bg-blue-100 text-blue-800 border-blue-200"
+      return "bg-blue-100 text-blue-800 border-blue-200";
     case 2:
-      return "bg-pink-100 text-pink-800 border-pink-200"
+      return "bg-pink-100 text-pink-800 border-pink-200";
     case 3:
-      return "bg-purple-100 text-purple-800 border-purple-200"
+      return "bg-purple-100 text-purple-800 border-purple-200";
     default:
-      return "bg-gray-100 text-gray-800 border-gray-200"
+      return "bg-gray-100 text-gray-800 border-gray-200";
   }
-}
+};
 
 export default function ProfilePage() {
-  const { user } = useLogin()
-  const [profileData, setProfileData] = useState<UserProfileResponse | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const { user } = useLogin();
+  const [profileData, setProfileData] = useState<UserProfileResponse | null>(
+    null
+  );
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const loadProfile = async () => {
       try {
-        setIsLoading(true)
+        setIsLoading(true);
 
         if (!user?.token) {
-          throw new Error("No authentication token found")
+          throw new Error("No authentication token found");
         }
 
-        const userIdFromToken = getUserIdFromToken(user.token)
+        const userIdFromToken = getUserIdFromToken(user.token);
         if (!userIdFromToken) {
-          throw new Error("Could not extract user ID from token")
+          throw new Error("Could not extract user ID from token");
         }
 
         const response = (await Get({
-          url: `/users/${userIdFromToken}/`,
-        })) as UserProfileResponse
+          url: `/user/users/${userIdFromToken}/`,
+        })) as UserProfileResponse;
 
-        setProfileData(response)
+        setProfileData(response);
       } catch (error: unknown) {
-        console.error("Failed to load profile:", error)
-        const errorWithResponse = error as ErrorWithResponse
-        setError(errorWithResponse.response?.data?.detail || errorWithResponse.message || "Failed to load profile")
+        console.error("Failed to load profile:", error);
+        const errorWithResponse = error as ErrorWithResponse;
+        setError(
+          errorWithResponse.response?.data?.detail ||
+            errorWithResponse.message ||
+            "Failed to load profile"
+        );
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
-    }
+    };
 
     if (user) {
-      loadProfile()
+      loadProfile();
     }
-  }, [user])
+  }, [user]);
 
   const formatDate = (dateString: string | null) => {
-    if (!dateString) return "Not provided"
+    if (!dateString) return "Not provided";
     return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
       month: "long",
       day: "numeric",
-    })
-  }
+    });
+  };
 
-  const getInitials = (firstName: string, lastName: string, userName: string) => {
+  const getInitials = (
+    firstName: string,
+    lastName: string,
+    userName: string
+  ) => {
     if (firstName && lastName) {
-      return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
+      return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
     }
-    return userName.substring(0, 2).toUpperCase()
-  }
+    return userName.substring(0, 2).toUpperCase();
+  };
 
   if (isLoading) {
     return (
@@ -192,7 +212,7 @@ export default function ProfilePage() {
           </Card>
         </div>
       </div>
-    )
+    );
   }
 
   if (error) {
@@ -206,16 +226,18 @@ export default function ProfilePage() {
             <div className="text-red-500 mb-4">
               <User className="w-12 h-12 mx-auto" />
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Failed to Load Profile</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              Failed to Load Profile
+            </h3>
             <p className="text-gray-600">{error}</p>
           </CardContent>
         </Card>
       </div>
-    )
+    );
   }
 
   if (!profileData) {
-    return null
+    return null;
   }
 
   return (
@@ -240,7 +262,10 @@ export default function ProfilePage() {
               <div className="relative mb-6">
                 {profileData.photo ? (
                   <Image
-                    src={profileData.photo || "/placeholder.svg?height=128&width=128"}
+                    src={
+                      profileData.photo ||
+                      "/placeholder.svg?height=128&width=128"
+                    }
                     alt="Profile"
                     width={128}
                     height={128}
@@ -248,14 +273,14 @@ export default function ProfilePage() {
                   />
                 ) : (
                   <div className="w-32 h-32 rounded-full mx-auto bg-gradient-to-br from-[#002c58] to-[#003d73] flex items-center justify-center text-white text-2xl font-bold shadow-lg">
-                    {getInitials(profileData.first_name, profileData.last_name, profileData.user_name)}
+                    {getInitials(
+                      profileData.first_name,
+                      profileData.last_name,
+                      profileData.user_name
+                    )}
                   </div>
                 )}
-                <button className="absolute bottom-0 right-1/2 transform translate-x-6 translate-y-2 bg-white rounded-full p-2 shadow-lg border border-gray-200 hover:bg-gray-50 transition-colors">
-                  <Camera className="w-4 h-4 text-gray-600" />
-                </button>
               </div>
-
               {/* Name and Username */}
               <div className="mb-4">
                 <h2 className="text-xl font-bold text-gray-900">
@@ -265,7 +290,6 @@ export default function ProfilePage() {
                 </h2>
                 <p className="text-gray-600">@{profileData.user_name}</p>
               </div>
-
               {/* Status Badges */}
               <div className="flex flex-wrap gap-2 justify-center mb-4">
                 {profileData.is_active && (
@@ -287,13 +311,13 @@ export default function ProfilePage() {
                   </Badge>
                 )}
               </div>
-
-              {/* User Group */}
+              {/* User Group
               {profileData.user_groups_name && (
                 <div className="text-sm text-gray-600">
-                  <span className="font-medium">Group:</span> {profileData.user_groups_name}
+                  <span className="font-medium">Group:</span>{" "}
+                  {profileData.user_groups_name}
                 </div>
-              )}
+              )} */}
             </div>
           </CardContent>
         </Card>
@@ -314,8 +338,12 @@ export default function ProfilePage() {
                   <Mail className="w-5 h-5 text-blue-600" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900">Email Address</p>
-                  <p className="text-sm text-gray-600 break-all">{profileData.email || "Not provided"}</p>
+                  <p className="text-sm font-medium text-gray-900">
+                    Email Address
+                  </p>
+                  <p className="text-sm text-gray-600 break-all">
+                    {profileData.email || "Not provided"}
+                  </p>
                 </div>
               </div>
 
@@ -325,8 +353,12 @@ export default function ProfilePage() {
                   <Phone className="w-5 h-5 text-green-600" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900">Mobile Number</p>
-                  <p className="text-sm text-gray-600">{profileData.mobile_no || "Not provided"}</p>
+                  <p className="text-sm font-medium text-gray-900">
+                    Mobile Number
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    {profileData.mobile_no || "Not provided"}
+                  </p>
                 </div>
               </div>
 
@@ -337,7 +369,9 @@ export default function ProfilePage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900">Gender</p>
-                  <Badge className={getGenderColor(profileData.gender)}>{getGenderText(profileData.gender)}</Badge>
+                  <Badge className={getGenderColor(profileData.gender)}>
+                    {getGenderText(profileData.gender)}
+                  </Badge>
                 </div>
               </div>
 
@@ -347,8 +381,12 @@ export default function ProfilePage() {
                   <Calendar className="w-5 h-5 text-purple-600" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900">Date of Birth</p>
-                  <p className="text-sm text-gray-600">{formatDate(profileData.birth_date)}</p>
+                  <p className="text-sm font-medium text-gray-900">
+                    Date of Birth
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    {formatDate(profileData.birth_date)}
+                  </p>
                 </div>
               </div>
 
@@ -359,7 +397,9 @@ export default function ProfilePage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900">Address</p>
-                  <p className="text-sm text-gray-600">{profileData.address || "Not provided"}</p>
+                  <p className="text-sm text-gray-600">
+                    {profileData.address || "Not provided"}
+                  </p>
                 </div>
               </div>
             </div>
@@ -368,7 +408,9 @@ export default function ProfilePage() {
 
             {/* Account Information */}
             <div>
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Account Information</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-4">
+                Account Information
+              </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Start Date */}
                 <div className="flex items-start space-x-3">
@@ -376,8 +418,12 @@ export default function ProfilePage() {
                     <Calendar className="w-5 h-5 text-indigo-600" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900">Member Since</p>
-                    <p className="text-sm text-gray-600">{formatDate(profileData.start_date)}</p>
+                    <p className="text-sm font-medium text-gray-900">
+                      Member Since
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      {formatDate(profileData.start_date)}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -386,5 +432,5 @@ export default function ProfilePage() {
         </Card>
       </div>
     </div>
-  )
+  );
 }

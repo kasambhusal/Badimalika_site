@@ -4,6 +4,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "@/styles/globals.css";
 import { LoginProvider } from "@/context/login-context";
 import { ConditionalLayout } from "@/app/conditional-layout";
+import { QueryProvider } from "./providers/query-provider";
+import { NotificationProvider } from "./providers/notification-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,7 +33,11 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <LoginProvider>
-          <ConditionalLayout>{children}</ConditionalLayout>
+          <ConditionalLayout>
+            <QueryProvider>
+              <NotificationProvider>{children}</NotificationProvider>
+            </QueryProvider>
+          </ConditionalLayout>
         </LoginProvider>
       </body>
     </html>

@@ -26,11 +26,11 @@ const BottomNav = () => {
 
   return (
     <nav
-      className="w-full overflow-x-auto bg-white border-t border-gray-100 shadow-xl py-3"
+      className="w-full overflow-x-auto bg-white border-t border-gray-100 shadow-xl h-[40px] flex justify-center items-center"
       role="navigation"
       aria-label="Main navigation"
     >
-      <div className="max-w-8/10 mx-auto px-6">
+      <div className="w-9/10 lg:w-8/10 pl-[20px] lg:pl-0">
         <div className="flex items-center justify-between ">
           {/* Navigation Items */}
           <ul className="flex items-center space-x-12">
