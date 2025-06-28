@@ -70,7 +70,7 @@ const MapComponent = memo(function MapComponent({
 
     mapInstanceRef.current = map;
 
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    const checkMobile = () => setIsMobile(window.innerWidth < 1024);
     checkMobile();
     window.addEventListener("resize", checkMobile);
 
@@ -411,7 +411,9 @@ const MapComponent = memo(function MapComponent({
     <div className="relative h-full w-19/20">
       {/* Ward Boundaries Toggle Button */}
       {wardBoundariesLoaded && (
-        <div className="absolute top-4 left-4 z-[1000]">
+        <div
+          className={`absolute top-4 ${isMobile ? "left-15" : "left-4"} z-[10]`}
+        >
           <Button
             onClick={toggleWardBoundaries}
             variant="outline"

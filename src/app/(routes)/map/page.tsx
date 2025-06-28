@@ -256,11 +256,10 @@ export default function MapWithSidebarPage() {
         {isMobile && (
           <Button
             onClick={() => setSidebarOpen(true)}
-            className="absolute top-4 left-4 z-30 bg-white text-gray-900 hover:bg-gray-100 shadow-lg"
+            className="absolute top-4 left-4 z-30 bg-white hover:bg-gray-50 text-gray-700 shadow-lg border border-gray-200 h-10 w-10 p-0 rounded-lg"
             size="sm"
           >
-            <Menu className="h-4 w-4 mr-1" />
-            तहहरू
+            <Menu className="h-5 w-5" />
           </Button>
         )}
 
