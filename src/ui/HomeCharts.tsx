@@ -134,11 +134,8 @@ export default function HomeCharts() {
     <div className="container mx-auto p-6 space-y-8">
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          स्थानीय सरकार डाटा भिजुअलाइजेसन ड्यासबोर्ड
+          वस्तुस्थिति विवरणहरु
         </h1>
-        <p className="text-gray-600">
-          निर्यात कार्यक्षमता सहित अन्तरक्रियात्मक चार्टहरू
-        </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

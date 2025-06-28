@@ -14,12 +14,12 @@ export default function Page() {
         title={
           <div className="flex items-center gap-2 text-lg font-semibold">
             <File />
-            हरिपुर नगरपालिका – वार्षिक प्रतिवेदन
+            हरिपुर नगरपालिका – वस्तुस्थिति विवरण
           </div>
         }
       >
         <p className="mb-6 leading-relaxed">
-          वार्षिक प्रतिवेदन हेर्न वा डाउनलोड गर्न तलको बटन थिच्नुहोस्।
+          वस्तुस्थिति विवरण हेर्न वा डाउनलोड गर्न तलको बटन थिच्नुहोस्।
         </p>
 
         {/* Action buttons */}
