@@ -67,20 +67,10 @@ export default async function DashboardPage() {
   const totalMale = reportsData?.metadata.total_male || 0;
   const totalFemale = reportsData?.metadata.total_female || 0;
   const totalWards = reportsData?.metadata.wards_included.length || 0;
-  const illiterateCount =
-    reportsData?.metadata.totals.demographics.education.illiterate || 0;
   const graduateCount =
     reportsData?.metadata.totals.demographics.education.bachelor_plus || 0;
   const foreignEmployed =
     reportsData?.metadata.totals.demographics.employment.foreign_employed || 0;
-
-  // Calculate literacy rate
-  const literacyRate =
-    totalPopulation > 0
-      ? Math.round(
-          ((totalPopulation - illiterateCount) / totalPopulation) * 100
-        )
-      : 0;
 
   const stats = [
     {
@@ -96,13 +86,6 @@ export default async function DashboardPage() {
       icon: Home,
       description: "Total Households",
       color: "text-green-600",
-    },
-    {
-      name: "साक्षरता दर",
-      value: `${literacyRate}%`,
-      icon: GraduationCap,
-      description: "Literacy Rate",
-      color: "text-purple-600",
     },
     {
       name: "वडा संख्या",
@@ -146,13 +129,13 @@ export default async function DashboardPage() {
       {/* Welcome Section */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">
-          हरिपुर नगरपालिका डेशबोर्ड
+          हरिपुर नगरपालिका ड्यासबोर्ड
         </h1>
         <p className="text-gray-600">नगरपालिकाको तथ्याङ्क र जानकारी</p>
       </div>
 
       {/* Main Stats Grid */}
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-6  lg:grid-cols-3">
         {stats.map((stat) => (
           <Card key={stat.name}>
             <CardContent className="p-6">

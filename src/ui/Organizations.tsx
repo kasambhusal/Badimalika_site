@@ -54,6 +54,20 @@ function useDebounce(value: string, delay: number) {
   return debouncedValue;
 }
 
+// Category grouping for statistics
+const CATEGORY_GROUPS = {
+  educational: [
+    "gov_educational",
+    "community_educational",
+    "private_educational",
+    "other_educational",
+    "educational",
+  ],
+  health: ["health"],
+  financial: ["financial", "commercial_bank", "cooperative"],
+  social: ["ngo", "cso", "social", "community_space", "religious"],
+};
+
 export default function OrganizationsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
@@ -77,6 +91,8 @@ export default function OrganizationsPage() {
       searchTerm: debouncedSearchTerm,
       category: selectedCategory,
     });
+
+  console.log(organizations);
 
   // Reset to first page when search term or category changes
   useEffect(() => {
@@ -108,7 +124,6 @@ export default function OrganizationsPage() {
   const getPageNumbers = useCallback(() => {
     const pages = [];
     const maxVisiblePages = 5;
-
     if (totalPages <= maxVisiblePages) {
       for (let i = 1; i <= totalPages; i++) {
         pages.push(i);
@@ -119,12 +134,10 @@ export default function OrganizationsPage() {
         currentPage - Math.floor(maxVisiblePages / 2)
       );
       const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-
       for (let i = startPage; i <= endPage; i++) {
         pages.push(i);
       }
     }
-
     return pages;
   }, [currentPage, totalPages]);
 
@@ -136,18 +149,20 @@ export default function OrganizationsPage() {
 
   // Get icon for category
   const getIconForCategory = (categoryValue: string) => {
-    switch (categoryValue) {
-      case "educational":
-        return <GraduationCap className="h-5 w-5" />;
-      case "health":
-        return <Hospital className="h-5 w-5" />;
-      case "financial":
-        return <Banknote className="h-5 w-5" />;
-      case "ngo":
-        return <Users className="h-5 w-5" />;
-      default:
-        return <Building2 className="h-5 w-5" />;
+    // Check which group this category belongs to
+    if (CATEGORY_GROUPS.educational.includes(categoryValue)) {
+      return <GraduationCap className="h-5 w-5" />;
     }
+    if (CATEGORY_GROUPS.health.includes(categoryValue)) {
+      return <Hospital className="h-5 w-5" />;
+    }
+    if (CATEGORY_GROUPS.financial.includes(categoryValue)) {
+      return <Banknote className="h-5 w-5" />;
+    }
+    if (CATEGORY_GROUPS.social.includes(categoryValue)) {
+      return <Users className="h-5 w-5" />;
+    }
+    return <Building2 className="h-5 w-5" />;
   };
 
   if (error) {
@@ -255,10 +270,10 @@ export default function OrganizationsPage() {
                 </div>
                 <div className="text-right">
                   <div className="text-2xl sm:text-3xl font-bold text-green-700">
-                    {statsLoading ? "..." : toNepaliNumber(stats.ngo)}
+                    {statsLoading ? "..." : toNepaliNumber(stats.social)}
                   </div>
                   <div className="text-xs sm:text-sm text-green-600 font-medium">
-                    गैरसरकारी संस्थाहरू
+                    सामाजिक संस्थाहरू
                   </div>
                 </div>
               </div>

@@ -259,7 +259,7 @@ export default function FeedbackForm() {
           >
             <CardTitle className="text-2xl font-bold text-center flex items-center justify-center">
               <Shield className="h-6 w-6 mr-2" />
-              Feedback Form
+              प्रतिक्रिया फारम
             </CardTitle>
           </CardHeader>
 
@@ -296,12 +296,12 @@ export default function FeedbackForm() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-1">
                   <Label htmlFor="name" className="text-sm font-medium">
-                    Your Name *
+                    पुरा नाम *
                   </Label>
                   <Input
                     id="name"
                     type="text"
-                    placeholder="Enter your full name"
+                    placeholder="आफ्नो पुरा नाम लाख्नुहोस"
                     value={formData.name}
                     onChange={(e) => handleInputChange("name", e.target.value)}
                     className={
@@ -315,12 +315,12 @@ export default function FeedbackForm() {
 
                 <div className="space-y-2">
                   <Label htmlFor="phone_number" className="text-sm font-medium">
-                    Phone Number *
+                    फोन नम्बर *
                   </Label>
                   <Input
                     id="phone_number"
                     type="tel"
-                    placeholder="Enter your phone number"
+                    placeholder="आफ्नो फोन नम्बर लाख्नुहोस"
                     value={formData.phone_number}
                     onChange={(e) =>
                       handleInputChange("phone_number", e.target.value)
@@ -341,12 +341,12 @@ export default function FeedbackForm() {
 
               <div className="space-y-2">
                 <Label htmlFor="subject" className="text-sm font-medium">
-                  Subject *
+                  बिषय *
                 </Label>
                 <Input
                   id="subject"
                   type="text"
-                  placeholder="What is this feedback about?"
+                  placeholder="यो प्रतिक्रिया के बारे हो?"
                   value={formData.subject}
                   onChange={(e) => handleInputChange("subject", e.target.value)}
                   className={
@@ -360,12 +360,12 @@ export default function FeedbackForm() {
 
               <div className="space-y-1">
                 <Label htmlFor="address" className="text-sm font-medium">
-                  Address *
+                  ठेगाना *
                 </Label>
                 <Input
                   id="address"
                   type="text"
-                  placeholder="Enter your address"
+                  placeholder="आफ्नो ठेगाना लाख्नुहोस"
                   value={formData.address}
                   onChange={(e) => handleInputChange("address", e.target.value)}
                   className={
@@ -379,11 +379,11 @@ export default function FeedbackForm() {
 
               <div className="space-y-1">
                 <Label htmlFor="message" className="text-sm font-medium">
-                  Message *
+                  सन्देश *
                 </Label>
                 <Textarea
                   id="message"
-                  placeholder="Please share your detailed feedback here..."
+                  placeholder="कृपया यहाँ आफ्नो विस्तृत प्रतिक्रिया साझा गर्नुहोस्।"
                   value={formData.message}
                   onChange={(e) => handleInputChange("message", e.target.value)}
                   className={`min-h-[120px] resize-none ${
@@ -458,7 +458,9 @@ export default function FeedbackForm() {
                   disabled={isSubmitting}
                   className="text-white px-8 py-2 min-w-[120px] bg-[#002c58] hover:bg-[#003d73]"
                 >
-                  {isSubmitting ? "Submitting..." : "Send Message"}
+                  {isSubmitting
+                    ? "प्रतिक्रिया पठाउँदै..."
+                    : "प्रतिक्रिया पठाउनुहोस्"}
                 </Button>
               </div>
             </form>

@@ -12,6 +12,7 @@ import { Eye, EyeOff, AlertCircle, User, Lock } from "lucide-react";
 import { useLogin } from "@/context/login-context";
 import { Post } from "@/lib/api";
 import type { ErrorWithResponse } from "@/types/api";
+import Link from "next/link";
 
 interface LoginData {
   user_name: string;
@@ -253,7 +254,7 @@ const Login: React.FC = () => {
       <Card className="w-full max-w-md shadow-2xl">
         <CardHeader className="text-center pb-4">
           <CardTitle className="text-2xl font-bold text-[#002c58]">
-            हरिपुर नगरपालिका
+            <Link href="/">हरिपुर नगरपालिका</Link>
           </CardTitle>
           <p className="text-gray-600 text-sm mt-1">
             Local Government Portal Login
